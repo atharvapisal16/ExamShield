@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quick Notes Generator – ExamShield</title>
+    <meta name="description"
+        content="AI-powered notes generator. Enter a topic or paste text, get bullet summaries and key formulas instantly.">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .notes-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .saved-notes-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .note-item {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .note-item:hover {
+            border-color: rgba(139, 92, 246, 0.4);
+            background: var(--bg-card-hover);
+        }
+
+        .note-item-icon {
+            font-size: 24px;
+        }
+
+        .note-item-title {
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .note-item-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+
+        .note-item-del {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 16px;
+            margin-left: auto;
+            padding: 4px;
+        }
+
+        .note-item-del:hover {
+            color: #f87171;
+        }
+
+        @media (max-width: 900px) {
+            .notes-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">📝 Quick <span>Notes Generator</span></h1>
+                <p class="page-subtitle">Enter any topic or paste text — AI generates bullet summaries, key formulas &
+                    definitions instantly.</p>
+            </div>
+            <div class="page-body">
+                <div class="notes-layout">
+
+                    <!-- LEFT: INPUT -->
+                    <div>
+                        <div class="card">
+                            <div class="section-title" style="margin-bottom:18px">✍️ Generate Notes</div>
+                            <div class="input-group">
+                                <div class="input-label">Topic Name *</div>
+                                <input type="text" class="input-field" id="topic-input"
+                                    placeholder="e.g. Newton's Laws of Motion, Organic Chemistry Basics...">
+                            </div>
+                            <div class="input-group">
+                                <div class="input-label">Content (optional — paste text, notes, or book excerpt)</div>
+                                <textarea class="textarea-field" id="content-input"
+                                    placeholder="Paste your textbook paragraph, syllabus points, or any reference material here..."
+                                    style="min-height:140px"></textarea>
+                            </div>
+                            <div class="input-group">
+                                <div class="input-label">Focus Type</div>
+                                <div style="display:flex;gap:8px;flex-wrap:wrap" id="focus-pills">
+                                    <button class="filter-pill active" data-f="all">📚 All</button>
+                                    <button class="filter-pill" data-f="bullet">• Bullet Points</button>
+                                    <button class="filter-pill" data-f="formula">🔢 Formulas</button>
+                                    <button class="filter-pill" data-f="definition">📖 Definitions</button>
+                                    <button class="filter-pill" data-f="5min">⚡ 5-Min Summary</button>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:10px;margin-top:4px">
+                                <button class="btn btn-primary" style="flex:1" onclick="generateNotes()" id="gen-btn">
+                                    🤖 Generate with AI
+                                </button>
+                                <button class="btn btn-secondary" onclick="openSettings()">⚙️ Keys</button>
+                            </div>
+                        </div>
+
+                        <!-- OUTPUT AREA -->
+                        <div class="card" style="margin-top:20px" id="output-card">
+                            <div
+                                style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+                                <div class="section-title">📄 Generated Notes</div>
+                                <div style="display:flex;gap:8px" id="output-actions" style="display:none">
+                                    <button class="btn btn-ghost btn-sm" onclick="copyNotes()">📋 Copy</button>
+                                    <button class="btn btn-success btn-sm" onclick="saveNote()">💾 Save</button>
+                                </div>
+                            </div>
+                            <div id="notes-output" class="notes-output">
+                                <div class="empty-state" style="padding:30px 0">
+                                    <div class="empty-state-icon" style="font-size:40px">🤖</div>
+                                    <div class="empty-state-text">Your AI-generated notes will appear here</div>
+                                    <div class="empty-state-sub">Enter a topic and click Generate!</div>
+                                </div>
+                            </div>
+
+                            <!-- AI COMPARE -->
+                            <div id="ai-compare-area" style="display:none;margin-top:20px"></div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: SAVED NOTES -->
+                    <div>
+                        <div class="card">
+                            <div class="section-header">
+                                <div class="section-title">💾 Saved Notes</div>
+                                <span class="badge badge-purple" id="notes-count">0 notes</span>
+                            </div>
+                            <div id="saved-notes-list" class="saved-notes-list">
+                                <div class="empty-state" style="padding:30px 0">
+                                    <div class="empty-state-icon" style="font-size:36px">📂</div>
+                                    <div class="empty-state-text">No saved notes yet</div>
+                                    <div class="empty-state-sub">Generated notes will appear here</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- MEMORY TRICKS -->
+                        <div class="card card-gradient" style="margin-top:20px">
+                            <div class="section-title" style="margin-bottom:14px">🧠 Memory Boost Tricks</div>
+                            <div id="mnemonics-list">
+                                <!-- Built by JS -->
+                            </div>
+                            <button class="btn btn-ghost btn-sm" style="margin-top:12px;width:100%"
+                                onclick="loadMnemonics()">🔀 Shuffle Tips</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/file-handler.js"></script>
+    <script src="js/ai-service.js"></script>
+    <script>
+        initPage('notes.html');
+        let currentFocus = 'all';
+        let currentNoteText = '';
+        let savedNotes = LS.get('er_notes', []);
+
+        // Focus pills
+        document.getElementById('focus-pills').addEventListener('click', e => {
+            const pill = e.target.closest('.filter-pill');
+            if (!pill) return;
+            document.querySelectorAll('#focus-pills .filter-pill').forEach(p => p.classList.remove('active'));
+            pill.classList.add('active');
+            currentFocus = pill.dataset.f;
+        });
+
+        function buildSystemPrompt(topic, focus) {
+            const base = `You are an expert study notes generator for students. Create clear, well-structured notes for: "${topic}".`;
+            const focusMap = {
+                all: 'Include: a brief summary, bullet points of key concepts, important formulas (if any), and key definitions. Use clear headers.',
+                bullet: 'Focus only on bullet points of the most important concepts. No fluff. Max 10 bullets.',
+                formula: 'Focus only on mathematical formulas, equations, and their explanations. List each with what the variables mean.',
+                definition: 'Focus only on key terms and their definitions. Format: **Term**: Definition.',
+                '5min': 'Create an ultra-short 5-minute "last minute" summary. Max 200 words. Only the absolutely essential points a student needs to remember.'
+            };
+            return `${base}\n${focusMap[focus] || focusMap.all}\nFormat the output clearly with emoji headers. Make it easy to study from.`;
+        }
+
+        async function generateNotes() {
+            const topic = document.getElementById('topic-input').value.trim();
+            const content = document.getElementById('content-input').value.trim();
+            if (!topic) { toast('Please enter a topic name!', '⚠️'); return; }
+
+            const btn = document.getElementById('gen-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Generating...';
+
+            const outputEl = document.getElementById('notes-output');
+            const compareArea = document.getElementById('ai-compare-area');
+            outputEl.innerHTML = '<div class="ai-loading" style="justify-content:center;padding:20px"><div class="spinner"></div> AI is generating your notes...</div>';
+            compareArea.style.display = 'none';
+
+            const prompt = content
+                ? `Topic: ${topic}\n\nReference Material:\n${content}\n\nGenerate study notes from the above.`
+                : `Generate comprehensive study notes for: ${topic}`;
+            const sysPrompt = buildSystemPrompt(topic, currentFocus);
+
+            try {
+                const result = await AI.queryBoth(prompt, sysPrompt);
+                const bestText = result.bestText;
+                currentNoteText = bestText;
+
+                // Render best in main output
+                const formatted = bestText
+                    .replace(/^## (.+)$/gm, '<h3>$1</h3>')
+                    .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+                    .replace(/^# (.+)$/gm, '<h3>$1</h3>')
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^[\-\•] (.+)$/gm, '<li>$1</li>')
+                    .replace(/(<li>.*<\/li>)/gs, '<ul>$1</ul>')
+                    .replace(/\n/g, '<br>');
+                outputEl.innerHTML = `<div style="font-size:14px;line-height:1.9">${formatted}</div>`;
+
+                document.getElementById('output-actions').style.display = 'flex';
+
+                // Show compare
+                compareArea.style.display = 'block';
+                AI.renderCompareUI('ai-compare-area', result);
+
+            } catch (e) {
+                outputEl.innerHTML = `<span style="color:#f87171">⚠️ ${e.message}</span>`;
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '🤖 Generate with AI';
+        }
+
+        function copyNotes() {
+            navigator.clipboard.writeText(currentNoteText);
+            toast('Notes copied to clipboard!', '📋');
+        }
+
+        function saveNote() {
+            if (!currentNoteText) return;
+            const topic = document.getElementById('topic-input').value.trim() || 'Untitled Note';
+            const note = { id: Date.now(), topic, text: currentNoteText, date: new Date().toLocaleDateString(), focus: currentFocus };
+            savedNotes.unshift(note);
+            LS.set('er_notes', savedNotes);
+            renderSavedNotes();
+            toast('Note saved!', '💾');
+        }
+
+        function deleteNote(id) {
+            savedNotes = savedNotes.filter(n => n.id !== id);
+            LS.set('er_notes', savedNotes);
+            renderSavedNotes();
+            toast('Note deleted', '🗑️');
+        }
+
+        function viewNote(note) {
+            document.getElementById('topic-input').value = note.topic;
+            currentNoteText = note.text;
+            const formatted = note.text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+            document.getElementById('notes-output').innerHTML = `<div style="font-size:14px;line-height:1.9">${formatted}</div>`;
+            document.getElementById('output-actions').style.display = 'flex';
+        }
+
+        function renderSavedNotes() {
+            const list = document.getElementById('saved-notes-list');
+            document.getElementById('notes-count').textContent = `${savedNotes.length} note${savedNotes.length !== 1 ? 's' : ''}`;
+            if (!savedNotes.length) {
+                list.innerHTML = '<div class="empty-state" style="padding:30px 0"><div class="empty-state-icon" style="font-size:36px">📂</div><div class="empty-state-text">No saved notes yet</div></div>';
+                return;
+            }
+            list.innerHTML = savedNotes.map(n => `
+      <div class="note-item" onclick="viewNote(${JSON.stringify(n).replace(/"/g, '&quot;')})">
+        <div class="note-item-icon">📝</div>
+        <div style="flex:1">
+          <div class="note-item-title">${n.topic}</div>
+          <div class="note-item-meta">${n.date} • ${n.focus}</div>
+        </div>
+        <button class="note-item-del" onclick="event.stopPropagation();deleteNote(${n.id})" title="Delete">🗑️</button>
+      </div>
+    `).join('');
+        }
+
+        function loadMnemonics() {
+            const shuffled = [...MNEMONICS].sort(() => Math.random() - 0.5).slice(0, 3);
+            document.getElementById('mnemonics-list').innerHTML = shuffled.map(m => `
+      <div style="padding:10px;background:var(--bg-input);border-radius:var(--radius-sm);border:1px solid var(--border-color);margin-bottom:8px">
+        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px">${m.topic}</div>
+        <div style="font-size:13px;color:var(--text-secondary)">${m.trick}</div>
+      </div>
+    `).join('');
+        }
+
+        renderSavedNotes();
+        loadMnemonics();
+    </script>
+</body>
+
+</html>

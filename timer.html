@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Study Timer – ExamShield</title>
+    <meta name="description"
+        content="Pomodoro-style study timer with streak tracking, break reminders, and daily stats.">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .timer-page {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 24px;
+        }
+
+        .timer-main {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 28px;
+        }
+
+        .session-presets {
+            display: flex;
+            gap: 10px;
+        }
+
+        .preset-btn {
+            padding: 10px 20px;
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 600;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .preset-btn.active {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .timer-controls {
+            display: flex;
+            gap: 12px;
+        }
+
+        .timer-phase {
+            font-family: var(--font-heading);
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 6px 16px;
+            border-radius: 20px;
+        }
+
+        .phase-focus {
+            background: rgba(139, 92, 246, 0.2);
+            color: var(--accent);
+        }
+
+        .phase-break {
+            background: rgba(16, 185, 129, 0.2);
+            color: var(--accent-green);
+        }
+
+        .custom-input-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .custom-label {
+            font-size: 13px;
+            color: var(--text-muted);
+        }
+
+        .custom-mins {
+            width: 70px;
+            padding: 8px;
+            text-align: center;
+        }
+
+        .session-log {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .session-entry {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+        }
+
+        .session-entry-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 900px) {
+            .timer-page {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">⏱️ Smart Study <span>Timer</span></h1>
+                <p class="page-subtitle">Pomodoro sessions with break reminders, streaks, and daily focus stats.</p>
+            </div>
+            <div class="page-body">
+                <div class="timer-page">
+
+                    <!-- MAIN TIMER -->
+                    <div class="card"
+                        style="display:flex;flex-direction:column;align-items:center;padding:40px 24px;gap:24px">
+                        <div class="timer-main" style="width:100%;">
+
+                            <!-- PHASE BADGE -->
+                            <div class="timer-phase phase-focus" id="phase-badge">🎯 FOCUS SESSION</div>
+
+                            <!-- SESSION PRESETS -->
+                            <div class="session-presets">
+                                <button class="preset-btn active" onclick="setPreset(25, this)" id="p25">⏱ 25
+                                    min</button>
+                                <button class="preset-btn" onclick="setPreset(45, this)" id="p45">🔥 45 min</button>
+                                <button class="preset-btn" onclick="setPreset(60, this)" id="p60">🚀 60 min</button>
+                                <button class="preset-btn" onclick="setCustom()" id="pCustom">✏️ Custom</button>
+                            </div>
+                            <div class="custom-input-row" id="custom-row" style="display:none">
+                                <span class="custom-label">Minutes:</span>
+                                <input type="number" class="input-field custom-mins" id="custom-mins" value="30" min="1"
+                                    max="120">
+                                <button class="btn btn-primary btn-sm" onclick="applyCustom()">Set</button>
+                            </div>
+
+                            <!-- TIMER CIRCLE -->
+                            <div class="timer-circle-container" style="width:280px;height:280px">
+                                <svg class="timer-svg" width="280" height="280" viewBox="0 0 280 280">
+                                    <circle class="timer-track" cx="140" cy="140" r="120" stroke-width="12" />
+                                    <circle class="timer-progress" cx="140" cy="140" r="120" stroke-width="12"
+                                        stroke="url(#timer-gradient)" stroke-dasharray="753.98" stroke-dashoffset="0"
+                                        id="timer-ring" />
+                                    <defs>
+                                        <linearGradient id="timer-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                            <stop offset="0%" stop-color="#8b5cf6" />
+                                            <stop offset="100%" stop-color="#3b82f6" />
+                                        </linearGradient>
+                                    </defs>
+                                </svg>
+                                <div class="timer-display">
+                                    <div class="timer-time" id="timer-display">25:00</div>
+                                    <div class="timer-label" id="timer-sublabel">Ready to focus</div>
+                                </div>
+                            </div>
+
+                            <!-- CONTROLS -->
+                            <div class="timer-controls">
+                                <button class="btn btn-ghost btn-lg" onclick="resetTimer()">↺ Reset</button>
+                                <button class="btn btn-primary btn-lg" onclick="toggleTimer()" id="start-btn"
+                                    style="min-width:140px">
+                                    ▶ Start Focus
+                                </button>
+                                <button class="btn btn-ghost btn-lg" onclick="skipBreak()" id="skip-btn"
+                                    style="display:none">⏭ Skip Break</button>
+                            </div>
+
+                            <!-- TODAY'S SESSIONS -->
+                            <div style="display:flex;gap:20px;text-align:center">
+                                <div>
+                                    <div style="font-size:24px;font-weight:800;font-family:var(--font-heading)"
+                                        id="t-sessions">0</div>
+                                    <div style="font-size:12px;color:var(--text-muted)">Sessions Today</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:24px;font-weight:800;font-family:var(--font-heading)"
+                                        id="t-focustime">0m</div>
+                                    <div style="font-size:12px;color:var(--text-muted)">Focus Time</div>
+                                </div>
+                                <div>
+                                    <div style="font-size:24px;font-weight:800;font-family:var(--font-heading)"
+                                        id="t-streak">0</div>
+                                    <div style="font-size:12px;color:var(--text-muted)">Day Streak 🔥</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SIDE PANEL -->
+                    <div style="display:flex;flex-direction:column;gap:20px">
+
+                        <!-- TODAY'S CHART -->
+                        <div class="card card-gradient">
+                            <div class="section-title" style="margin-bottom:16px">📈 Today's Focus</div>
+                            <div style="display:flex;gap:4px;align-items:flex-end;height:60px;margin-bottom:8px"
+                                id="today-chart"></div>
+                            <div style="font-size:12px;color:var(--text-muted);text-align:center" id="today-total">0 min
+                                focused today</div>
+                        </div>
+
+                        <!-- SESSION LOG -->
+                        <div class="card">
+                            <div class="section-header">
+                                <div class="section-title">📋 Session Log</div>
+                                <button class="btn btn-ghost btn-sm" onclick="clearLog()">Clear</button>
+                            </div>
+                            <div class="session-log" id="session-log">
+                                <div class="empty-state" style="padding:20px 0">
+                                    <div style="font-size:30px;text-align:center">⏰</div>
+                                    <div class="empty-state-sub" style="text-align:center;margin-top:6px">Complete
+                                        sessions to see log</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- TIPS -->
+                        <div class="card"
+                            style="background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(239,68,68,0.05));border-color:rgba(245,158,11,0.2)">
+                            <div class="section-title" style="margin-bottom:10px">💡 Pomodoro Tips</div>
+                            <ul
+                                style="font-size:13px;color:var(--text-secondary);line-height:1.9;padding-left:16px;list-style:disc">
+                                <li>After 4 sessions, take a 30-min long break</li>
+                                <li>Put your phone face-down during focus</li>
+                                <li>Write down distracting thoughts — don't act on them</li>
+                                <li>One task per Pomodoro session</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/file-handler.js"></script>
+    <script>
+        initPage('timer.html');
+
+        const CIRCUMFERENCE = 2 * Math.PI * 120;
+        let totalSeconds = 25 * 60;
+        let sessionMins = 25;
+        let remainingSeconds = totalSeconds;
+        let timerInterval = null;
+        let isRunning = false;
+        let isBreak = false;
+        let todayLog = LS.get('er_timerlog', []);
+        let todaySessions = LS.get('er_today_sessions', { date: new Date().toDateString(), count: 0, mins: 0 });
+        if (todaySessions.date !== new Date().toDateString()) {
+            todaySessions = { date: new Date().toDateString(), count: 0, mins: 0 };
+            LS.set('er_today_sessions', todaySessions);
+        }
+
+        const stats = getStats();
+        document.getElementById('t-streak').textContent = stats.streak || 0;
+        document.getElementById('t-sessions').textContent = todaySessions.count;
+        document.getElementById('t-focustime').textContent = todaySessions.mins + 'm';
+        document.getElementById('today-total').textContent = `${todaySessions.mins} min focused today`;
+
+        function setPreset(mins, el) {
+            if (isRunning) return;
+            sessionMins = mins;
+            totalSeconds = mins * 60;
+            remainingSeconds = totalSeconds;
+            updateDisplay();
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            document.getElementById('custom-row').style.display = 'none';
+        }
+
+        function setCustom() {
+            document.getElementById('custom-row').style.display = 'flex';
+        }
+
+        function applyCustom() {
+            const mins = parseInt(document.getElementById('custom-mins').value) || 30;
+            sessionMins = Math.max(1, Math.min(120, mins));
+            totalSeconds = sessionMins * 60;
+            remainingSeconds = totalSeconds;
+            updateDisplay();
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            document.getElementById('pCustom').classList.add('active');
+        }
+
+        function updateDisplay() {
+            const m = Math.floor(remainingSeconds / 60);
+            const s = remainingSeconds % 60;
+            document.getElementById('timer-display').textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            const progress = remainingSeconds / totalSeconds;
+            document.getElementById('timer-ring').style.strokeDashoffset = CIRCUMFERENCE * (1 - progress);
+            if (remainingSeconds <= 60 && !isBreak) {
+                document.getElementById('timer-ring').style.stroke = '#ef4444';
+            } else {
+                document.getElementById('timer-ring').style.stroke = 'url(#timer-gradient)';
+            }
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                document.getElementById('start-btn').innerHTML = '▶ Resume';
+                document.getElementById('timer-sublabel').textContent = 'Paused';
+            } else {
+                isRunning = true;
+                document.getElementById('start-btn').innerHTML = '⏸ Pause';
+                timerInterval = setInterval(tick, 1000);
+            }
+        }
+
+        function tick() {
+            if (remainingSeconds <= 0) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                sessionComplete();
+                return;
+            }
+            remainingSeconds--;
+            updateDisplay();
+            const m = Math.floor(remainingSeconds / 60);
+            const s = remainingSeconds % 60;
+            document.getElementById('timer-sublabel').textContent = isBreak ? `Break — ${m}:${String(s).padStart(2, '0')} left` : `Focusing... stay strong 💪`;
+        }
+
+        function sessionComplete() {
+            if (!isBreak) {
+                // Focus complete → log it
+                addStudyMinutes(sessionMins);
+                todaySessions.count++;
+                todaySessions.mins += sessionMins;
+                LS.set('er_today_sessions', todaySessions);
+                document.getElementById('t-sessions').textContent = todaySessions.count;
+                document.getElementById('t-focustime').textContent = todaySessions.mins + 'm';
+                document.getElementById('today-total').textContent = `${todaySessions.mins} min focused today`;
+                document.getElementById('t-streak').textContent = getStats().streak || 0;
+
+                const logEntry = { time: new Date().toLocaleTimeString(), mins: sessionMins, type: 'focus' };
+                todayLog.unshift(logEntry);
+                LS.set('er_timerlog', todayLog.slice(0, 30));
+                renderLog();
+                toast(`🎉 Session complete! You focused for ${sessionMins} min!`, '🔥');
+
+                // Start break
+                const breakMins = todaySessions.count % 4 === 0 ? 30 : 5;
+                startBreak(breakMins);
+            } else {
+                endBreak();
+            }
+        }
+
+        function startBreak(mins) {
+            isBreak = true;
+            totalSeconds = mins * 60;
+            remainingSeconds = totalSeconds;
+            document.getElementById('phase-badge').textContent = `☕ BREAK (${mins} min)`;
+            document.getElementById('phase-badge').className = 'timer-phase phase-break';
+            document.getElementById('start-btn').innerHTML = '▶ Start Break';
+            document.getElementById('start-btn').style.background = 'var(--gradient-green)';
+            document.getElementById('skip-btn').style.display = '';
+            updateDisplay();
+            if (Notification.permission === 'granted') {
+                new Notification('🎉 Focus Session Complete!', { body: `Take a ${mins}-minute break. You earned it!` });
+            }
+        }
+
+        function endBreak() {
+            isBreak = false;
+            totalSeconds = sessionMins * 60;
+            remainingSeconds = totalSeconds;
+            document.getElementById('phase-badge').textContent = '🎯 FOCUS SESSION';
+            document.getElementById('phase-badge').className = 'timer-phase phase-focus';
+            document.getElementById('start-btn').innerHTML = '▶ Start Focus';
+            document.getElementById('start-btn').style.background = '';
+            document.getElementById('skip-btn').style.display = 'none';
+            updateDisplay();
+            toast('Break over! Ready for another session? 💪', '🚀');
+        }
+
+        function skipBreak() { clearInterval(timerInterval); isRunning = false; endBreak(); }
+
+        function resetTimer() {
+            clearInterval(timerInterval);
+            isRunning = false;
+            isBreak = false;
+            totalSeconds = sessionMins * 60;
+            remainingSeconds = totalSeconds;
+            document.getElementById('start-btn').innerHTML = '▶ Start Focus';
+            document.getElementById('start-btn').style.background = '';
+            document.getElementById('phase-badge').textContent = '🎯 FOCUS SESSION';
+            document.getElementById('phase-badge').className = 'timer-phase phase-focus';
+            document.getElementById('skip-btn').style.display = 'none';
+            document.getElementById('timer-sublabel').textContent = 'Ready to focus';
+            updateDisplay();
+        }
+
+        function renderLog() {
+            const log = document.getElementById('session-log');
+            if (!todayLog.length) {
+                log.innerHTML = '<div class="empty-state" style="padding:20px 0"><div style="font-size:30px;text-align:center">⏰</div><div class="empty-state-sub" style="text-align:center;margin-top:6px">Complete sessions to see log</div></div>';
+                return;
+            }
+            log.innerHTML = todayLog.map(e => `
+      <div class="session-entry">
+        <div class="session-entry-dot" style="background:${e.type === 'focus' ? 'var(--accent)' : 'var(--accent-green)'}"></div>
+        <div style="flex:1">${e.type === 'focus' ? '🎯 Focus' : '☕ Break'} — ${e.mins} min</div>
+        <div style="color:var(--text-muted);font-size:11px">${e.time}</div>
+      </div>
+    `).join('');
+        }
+
+        function clearLog() { todayLog = []; LS.set('er_timerlog', []); renderLog(); }
+
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        updateDisplay();
+        renderLog();
+    </script>
+</body>
+
+</html>

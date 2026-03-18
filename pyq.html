@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PYQ Bank – ExamShield</title>
+    <meta name="description"
+        content="Previous Year Questions bank for BTech CSE. Subject-wise, unit-wise. Star and filter important questions.">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .pyq-layout {
+            display: grid;
+            grid-template-columns: 300px 1fr;
+            gap: 24px;
+        }
+
+        .pyq-form-card {
+            position: sticky;
+            top: 20px;
+        }
+
+        .pyq-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .marks-badge {
+            min-width: 40px;
+            height: 40px;
+            background: var(--gradient-primary);
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 13px;
+            font-weight: 800;
+            flex-shrink: 0;
+            font-family: var(--font-heading);
+        }
+
+        .pyq-expand {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 14px;
+            padding: 4px 8px;
+        }
+
+        .pyq-expand:hover {
+            color: var(--accent);
+        }
+
+        select option {
+            background: #1a1a35;
+            color: #ffffff;
+        }
+
+        @media (max-width: 900px) {
+            .pyq-layout {
+                grid-template-columns: 1fr;
+            }
+
+            .pyq-form-card {
+                position: static;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">📋 PYQ <span>Bank</span></h1>
+                <p class="page-subtitle">Previous Year Questions — BTech CSE (IoT & Blockchain). Subject-wise,
+                    unit-wise. Star the important ones! ⭐</p>
+            </div>
+            <div class="page-body">
+                <div class="pyq-layout">
+
+                    <!-- ADD FORM -->
+                    <div>
+                        <div class="card pyq-form-card">
+                            <div class="section-title" style="margin-bottom:16px">➕ Add Question</div>
+                            <div class="add-card-form" style="display:flex;flex-direction:column;gap:12px">
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Subject *</div>
+                                    <select class="input-field" id="new-subject">
+                                        <option>Data Structures & Algorithms</option>
+                                        <option>Computer Networks</option>
+                                        <option>Operating Systems</option>
+                                        <option>DBMS</option>
+                                        <option>OOP (Java/C++)</option>
+                                        <option>Computer Organization & Architecture</option>
+                                        <option>Discrete Mathematics</option>
+                                        <option>Engineering Mathematics</option>
+                                        <option>IoT Fundamentals</option>
+                                        <option>Blockchain Technology</option>
+                                        <option>Software Engineering</option>
+                                        <option>Theory of Computation</option>
+                                        <option>Digital Electronics</option>
+                                        <option>Python Programming</option>
+                                    </select>
+                                </div>
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Unit / Module</div>
+                                    <input type="text" class="input-field" id="new-unit"
+                                        placeholder="e.g. Unit 2, Module 4">
+                                </div>
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Year</div>
+                                    <input type="number" class="input-field" id="new-year" placeholder="2024" min="2018"
+                                        max="2030" value="2024">
+                                </div>
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Marks</div>
+                                    <select class="input-field" id="new-marks">
+                                        <option>2</option>
+                                        <option>4</option>
+                                        <option>5</option>
+                                        <option>8</option>
+                                        <option>10</option>
+                                        <option>15</option>
+                                    </select>
+                                </div>
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Question *</div>
+                                    <textarea class="textarea-field" id="new-question"
+                                        placeholder="Type the question here..." style="min-height:100px"></textarea>
+                                </div>
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Answer / Hint (optional)</div>
+                                    <textarea class="textarea-field" id="new-answer"
+                                        placeholder="Answer or key points..." style="min-height:70px"></textarea>
+                                </div>
+                                <button class="btn btn-primary" onclick="addQuestion()">➕ Add to Bank</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- PYQ LIST -->
+                    <div>
+                        <!-- FILTERS -->
+                        <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center">
+                            <div class="filter-bar" style="margin:0;flex:1">
+                                <button class="filter-pill active" data-f="all" onclick="applyFilter('all',this)">📚
+                                    All</button>
+                                <button class="filter-pill" data-f="starred" onclick="applyFilter('starred',this)">⭐
+                                    Starred</button>
+                                <button class="filter-pill" data-f="Data Structures & Algorithms"
+                                    onclick="applyFilter('Data Structures & Algorithms',this)">📊 DSA</button>
+                                <button class="filter-pill" data-f="Computer Networks"
+                                    onclick="applyFilter('Computer Networks',this)">🌐 CN</button>
+                                <button class="filter-pill" data-f="Operating Systems"
+                                    onclick="applyFilter('Operating Systems',this)">💻 OS</button>
+                                <button class="filter-pill" data-f="DBMS" onclick="applyFilter('DBMS',this)">🗄️
+                                    DBMS</button>
+                                <button class="filter-pill" data-f="IoT Fundamentals"
+                                    onclick="applyFilter('IoT Fundamentals',this)">📡 IoT</button>
+                                <button class="filter-pill" data-f="Blockchain Technology"
+                                    onclick="applyFilter('Blockchain Technology',this)">🔗 BC</button>
+                            </div>
+                        </div>
+
+                        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                            <input type="text" class="input-field" id="search-input"
+                                placeholder="🔍 Search questions..." style="width:220px;padding:8px 12px"
+                                oninput="renderList()">
+                            <div id="pyq-count" style="font-size:13px;color:var(--text-muted)">0 questions</div>
+                        </div>
+
+                        <div class="pyq-list" id="pyq-list"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/file-handler.js"></script>
+    <script>
+        initPage('pyq.html');
+
+        const SAMPLE_PYQs = [
+            { id: 1, subject: 'Data Structures & Algorithms', unit: 'Unit 2', year: 2023, marks: 10, question: "Explain different types of tree traversals (Inorder, Preorder, Postorder) with examples and their time complexity.", answer: "Inorder: Left→Root→Right (O(n)). Preorder: Root→Left→Right. Postorder: Left→Right→Root. All O(n). Used in BST for sorted output.", starred: true },
+            { id: 2, subject: 'Data Structures & Algorithms', unit: 'Unit 3', year: 2023, marks: 8, question: "Write an algorithm for Dijkstra's shortest path and analyze its time complexity with adjacency matrix and min-heap.", answer: "With min-heap + adjacency list: O((V+E) log V). With adjacency matrix: O(V²). Greedy algorithm — picks minimum distance vertex at each step.", starred: true },
+            { id: 3, subject: 'Computer Networks', unit: 'Module 3', year: 2024, marks: 10, question: "Explain the TCP 3-way handshake and 4-way termination process with diagrams.", answer: "3-way: SYN→SYN-ACK→ACK. Termination: FIN→ACK→FIN→ACK (4-way because each direction closed independently). TIME_WAIT state ensures packets flushed.", starred: true },
+            { id: 4, subject: 'Operating Systems', unit: 'Unit 4', year: 2023, marks: 10, question: "Explain Banker's Algorithm for deadlock avoidance. Illustrate with a 3-process example.", answer: "Banker's uses Max, Allocation, Need, Available matrices. Safe state = sequence where each process can finish. Need[i] = Max[i] - Allocation[i].", starred: false },
+            { id: 5, subject: 'DBMS', unit: 'Module 2', year: 2024, marks: 8, question: "Explain 2NF and 3NF normalization with examples. Why is BCNF stricter than 3NF?", answer: "2NF: No partial dependency. 3NF: No transitive dependency. BCNF: For every FD X→Y, X must be superkey. BCNF is stricter — removes anomalies 3NF misses.", starred: true },
+            { id: 6, subject: 'IoT Fundamentals', unit: 'Unit 1', year: 2023, marks: 8, question: "What is the IoT reference model? Explain its 7 layers with functions of each.", answer: "Layer 1: Physical devices/controllers. Layer 2: Connectivity. Layer 3: Edge computing. Layer 4: Data accumulation. Layer 5: Data abstraction. Layer 6: Application. Layer 7: Collaboration/Processes.", starred: false },
+            { id: 7, subject: 'Blockchain Technology', unit: 'Module 2', year: 2024, marks: 10, question: "Explain the consensus mechanisms: PoW, PoS, and DPoS. Compare their energy efficiency and security.", answer: "PoW: Miners solve hash puzzle, energy-intensive (Bitcoin). PoS: Validators stake coins, energy-efficient (Ethereum 2.0). DPoS: Token holders vote for delegates, fastest. PoW most secure, PoS more scalable.", starred: true },
+            { id: 8, subject: 'OOP (Java/C++)', unit: 'Unit 2', year: 2023, marks: 8, question: "Explain polymorphism in Java with compile-time and runtime examples. How does dynamic method dispatch work?", answer: "Compile-time: method overloading (same name, different params). Runtime: method overriding via inheritance. Dynamic dispatch: JVM resolves method at runtime based on actual object type.", starred: false },
+            { id: 9, subject: 'Computer Organization & Architecture', unit: 'Unit 3', year: 2023, marks: 10, question: "Explain cache memory organization. Compare direct mapping, associative mapping, and set-associative mapping.", answer: "Direct: Address → fixed cache line. Associative: Any block → any cache line (tag comparison). Set-associative: compromise. Higher associativity = fewer conflicts but slower lookup.", starred: false },
+            { id: 10, subject: 'Discrete Mathematics', unit: 'Module 4', year: 2024, marks: 8, question: "State and prove Euler's formula for planar graphs: V - E + F = 2. State its corollaries.", answer: "Proof by induction on edges. Corollary: E ≤ 3V-6 for planar simple graphs. K₅ and K₃,₃ are non-planar (Kuratowski's theorem).", starred: true },
+            { id: 11, subject: 'Engineering Mathematics', unit: 'Unit 2', year: 2023, marks: 10, question: "Solve the differential equation: dy/dx + 2y = 4x using the integrating factor method.", answer: "IF = e^∫2dx = e^(2x). Multiply both sides: d/dx[y·e^(2x)] = 4x·e^(2x). Integrate using parts: y = 2x - 1 + Ce^(-2x).", starred: false },
+            { id: 12, subject: 'Computer Networks', unit: 'Module 5', year: 2023, marks: 8, question: "What is subnetting? Divide the network 192.168.1.0/24 into 4 equal subnets and find the broadcast address of each.", answer: "Borrow 2 bits: /26. Subnets: .0, .64, .128, .192. Broadcasts: .63, .127, .191, .255. Each has 62 usable hosts.", starred: true },
+        ];
+
+        let questions = LS.get('er_pyqs', null);
+        if (!questions || questions.length < 8) { questions = SAMPLE_PYQs; LS.set('er_pyqs', questions); }
+        let questions_store = [...questions];
+
+        let activeFilter = 'all';
+        let expandedIds = new Set();
+
+        function addQuestion() {
+            const subject = document.getElementById('new-subject').value;
+            const unit = document.getElementById('new-unit').value.trim();
+            const year = parseInt(document.getElementById('new-year').value) || 2024;
+            const marks = parseInt(document.getElementById('new-marks').value) || 5;
+            const question = document.getElementById('new-question').value.trim();
+            const answer = document.getElementById('new-answer').value.trim();
+            if (!question) { toast('Please enter a question!', '⚠️'); return; }
+            const q = { id: Date.now(), subject, unit, year, marks, question, answer, starred: false };
+            questions_store.unshift(q);
+            LS.set('er_pyqs', questions_store);
+            renderList();
+            document.getElementById('new-question').value = '';
+            document.getElementById('new-answer').value = '';
+            document.getElementById('new-unit').value = '';
+            toast('Question added to bank!', '✅');
+        }
+
+        function toggleStar(id) {
+            const q = questions_store.find(q => q.id === id);
+            if (q) { q.starred = !q.starred; LS.set('er_pyqs', questions_store); renderList(); }
+        }
+
+        function deleteQuestion(id) {
+            questions_store = questions_store.filter(q => q.id !== id);
+            LS.set('er_pyqs', questions_store);
+            renderList();
+            toast('Question deleted', '🗑️');
+        }
+
+        function toggleExpand(id) {
+            if (expandedIds.has(id)) expandedIds.delete(id);
+            else expandedIds.add(id);
+            renderList();
+        }
+
+        function applyFilter(f, el) {
+            activeFilter = f;
+            document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            renderList();
+        }
+
+        function renderList() {
+            const search = document.getElementById('search-input').value.toLowerCase();
+            let filtered = questions_store;
+            if (activeFilter === 'starred') filtered = filtered.filter(q => q.starred);
+            else if (activeFilter !== 'all') filtered = filtered.filter(q => q.subject === activeFilter);
+            if (search) filtered = filtered.filter(q => q.question.toLowerCase().includes(search) || q.subject.toLowerCase().includes(search) || (q.unit || '').toLowerCase().includes(search));
+
+            document.getElementById('pyq-count').textContent = `${filtered.length} question${filtered.length !== 1 ? 's' : ''}`;
+
+            const list = document.getElementById('pyq-list');
+            if (!filtered.length) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div class="empty-state-text">No questions found</div><div class="empty-state-sub">Add questions using the form, or change filter</div></div>';
+                return;
+            }
+
+            list.innerHTML = filtered.map(q => {
+                const isExpanded = expandedIds.has(q.id);
+                return `
+        <div class="pyq-item">
+          <button class="pyq-star${q.starred ? ' starred' : ''}" onclick="toggleStar(${q.id})" title="${q.starred ? 'Unstar' : 'Star'}">⭐</button>
+          <div class="marks-badge">${q.marks}M</div>
+          <div class="pyq-content">
+            <div class="pyq-question">${q.question}</div>
+            <div class="pyq-meta">
+              <span class="badge badge-purple">${q.subject}</span>
+              ${q.unit ? `<span class="badge badge-blue">${q.unit}</span>` : ''}
+              <span class="badge badge-yellow">${q.year}</span>
+            </div>
+            ${isExpanded && q.answer ? `<div style="margin-top:10px;padding:10px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.2);border-radius:var(--radius-sm);font-size:13px;color:var(--text-secondary);line-height:1.7">
+              <div style="font-size:11px;font-weight:700;color:#34d399;margin-bottom:4px">✅ ANSWER / HINT</div>
+              ${q.answer}
+            </div>` : ''}
+          </div>
+          <div style="display:flex;flex-direction:column;gap:4px;flex-shrink:0">
+            ${q.answer ? `<button class="pyq-expand" onclick="toggleExpand(${q.id})" title="${isExpanded ? 'Hide' : 'Show'} answer">${isExpanded ? '▲ Hide' : '▼ Answer'}</button>` : ''}
+            <button class="pyq-expand" onclick="deleteQuestion(${q.id})" title="Delete" style="color:#f87171">🗑️</button>
+          </div>
+        </div>
+      `;
+            }).join('');
+        }
+
+        renderList();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Files – ExamShield</title>
+    <meta name="description"
+        content="Upload your personal notes, syllabus and question papers. AI will use them to give personalized answers.">
+    <!-- PDF.js CDN for client-side PDF text extraction -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .upload-zone {
+            border: 2px dashed var(--border-color);
+            border-radius: var(--radius-xl);
+            padding: 48px 32px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            background: var(--bg-card);
+            position: relative;
+        }
+
+        .upload-zone:hover,
+        .upload-zone.drag-over {
+            border-color: var(--accent);
+            background: rgba(139, 92, 246, 0.08);
+        }
+
+        .upload-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+            width: 100%;
+            height: 100%;
+        }
+
+        .file-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px 20px;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            transition: var(--transition);
+        }
+
+        .file-card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        .file-card.active-file {
+            border-color: rgba(16, 185, 129, 0.4);
+            background: rgba(16, 185, 129, 0.05);
+        }
+
+        .file-icon {
+            font-size: 32px;
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-weight: 600;
+            font-size: 15px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 3px;
+        }
+
+        .file-preview {
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-top: 8px;
+            line-height: 1.5;
+            padding: 8px;
+            background: var(--bg-input);
+            border-radius: var(--radius-sm);
+            display: none;
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 40px;
+            height: 22px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--border-color);
+            border-radius: 22px;
+            transition: 0.3s;
+        }
+
+        .toggle-slider::before {
+            position: absolute;
+            content: "";
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background: white;
+            border-radius: 50%;
+            transition: 0.3s;
+        }
+
+        input:checked+.toggle-slider {
+            background: var(--accent-green);
+        }
+
+        input:checked+.toggle-slider::before {
+            transform: translateX(18px);
+        }
+
+        .context-info {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(6, 182, 212, 0.08));
+            border: 1px solid rgba(16, 185, 129, 0.25);
+            border-radius: var(--radius-lg);
+            padding: 20px;
+        }
+
+        .uploading-bar {
+            height: 4px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">📁 My <span>Files</span></h1>
+                <p class="page-subtitle">Upload your notes, syllabus, or papers — AI will read them and give answers
+                    based on your actual material!</p>
+            </div>
+            <div class="page-body">
+
+                <div class="grid-2" style="gap:24px;margin-bottom:28px">
+
+                    <!-- UPLOAD ZONE -->
+                    <div>
+                        <div class="upload-zone" id="upload-zone" ondragover="onDragOver(event)"
+                            ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+                            <input type="file" id="file-input" multiple accept=".pdf,.txt,.md,.docx"
+                                onchange="handleFileInput(event)">
+                            <div style="font-size:52px;margin-bottom:12px">📤</div>
+                            <div
+                                style="font-family:var(--font-heading);font-size:20px;font-weight:700;margin-bottom:8px">
+                                Drop files here or click to browse</div>
+                            <div style="font-size:14px;color:var(--text-muted);margin-bottom:12px">Supports PDF, TXT,
+                                MD, DOCX</div>
+                            <div class="badge badge-purple">📄 PDFs extracted by AI</div>
+                        </div>
+
+                        <!-- Upload Progress -->
+                        <div id="upload-status"
+                            style="display:none;margin-top:12px;padding:12px;background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md)">
+                            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+                                <span id="upload-status-text">Processing...</span>
+                                <span id="upload-pct">0%</span>
+                            </div>
+                            <div style="background:rgba(255,255,255,0.08);border-radius:2px;height:4px;overflow:hidden">
+                                <div class="uploading-bar" id="upload-progress-bar"></div>
+                            </div>
+                        </div>
+
+                        <!-- Context Info -->
+                        <div class="context-info" style="margin-top:16px">
+                            <div
+                                style="font-family:var(--font-heading);font-size:15px;font-weight:700;margin-bottom:8px">
+                                🧠 How it works</div>
+                            <div style="font-size:13px;color:var(--text-secondary);line-height:1.8">
+                                📎 Files marked <strong>Active for AI</strong> are automatically injected into every AI
+                                query<br>
+                                🤖 The AI reads your syllabus/notes and gives answers matching your curriculum<br>
+                                🔒 All files stay <strong>in your browser only</strong> — nothing uploaded to any
+                                server<br>
+                                ⚡ Works with Doubt Solver, Quick Notes, and AI features across the app
+                            </div>
+                            <div
+                                style="margin-top:16px;padding:12px;background:rgba(139,92,246,0.1);border-radius:var(--radius-sm);font-size:12px;color:var(--text-muted)">
+                                📊 <strong>Active context:</strong> <span id="context-chars">0</span> / 8,000 chars
+                                &nbsp;|&nbsp; <strong>Active files:</strong> <span id="active-count">0</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- FILE LIST -->
+                    <div>
+                        <div class="section-header">
+                            <div class="section-title">📂 Uploaded Files</div>
+                            <span class="badge badge-purple" id="total-files-badge">0 files</span>
+                        </div>
+                        <div id="file-list" style="display:flex;flex-direction:column;gap:10px">
+                            <div class="empty-state" id="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <div class="empty-state-text">No files uploaded yet</div>
+                                <div class="empty-state-sub">Upload your notes, syllabus, or PYQ papers to get
+                                    AI-powered personalized answers</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TIPS -->
+                <div class="card"
+                    style="background:linear-gradient(135deg,rgba(139,92,246,0.1),rgba(59,130,246,0.06));border-color:rgba(139,92,246,0.2)">
+                    <div class="section-title" style="margin-bottom:12px">💡 What to upload for best results</div>
+                    <div
+                        style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:13px;color:var(--text-secondary)">
+                        <div style="padding:12px;background:var(--bg-card);border-radius:var(--radius-sm)">📚
+                            <strong>Syllabus PDF</strong><br>AI knows exactly which topics to focus on</div>
+                        <div style="padding:12px;background:var(--bg-card);border-radius:var(--radius-sm)">📝
+                            <strong>Handwritten Notes (typed)</strong><br>Get AI explanations matching your notes</div>
+                        <div style="padding:12px;background:var(--bg-card);border-radius:var(--radius-sm)">📋
+                            <strong>Previous Year Papers</strong><br>AI learns question patterns from your college</div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Set PDF.js worker
+        if (typeof pdfjsLib !== 'undefined') {
+            pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    </script>
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/file-handler.js"></script>
+    <script>
+        initPage('uploads.html');
+
+        function getFileIcon(name) {
+            const n = name.toLowerCase();
+            if (n.endsWith('.pdf')) return '📄';
+            if (n.endsWith('.docx') || n.endsWith('.doc')) return '📝';
+            if (n.endsWith('.txt') || n.endsWith('.md')) return '🗒️';
+            return '📁';
+        }
+
+        function renderFiles() {
+            const files = FileHandler.getAll();
+            const list = document.getElementById('file-list');
+            const empty = document.getElementById('empty-state');
+            document.getElementById('total-files-badge').textContent = `${files.length} file${files.length !== 1 ? 's' : ''}`;
+
+            // Update context stats
+            const ctx = FileHandler.getActiveContext();
+            document.getElementById('context-chars').textContent = ctx.length.toLocaleString();
+            document.getElementById('active-count').textContent = FileHandler.activeCount();
+
+            if (!files.length) {
+                empty.style.display = 'block';
+                list.innerHTML = '';
+                list.appendChild(empty);
+                return;
+            }
+            list.innerHTML = files.map(f => `
+      <div class="file-card ${f.active ? 'active-file' : ''}" id="fc-${f.id}">
+        <div class="file-icon">${getFileIcon(f.name)}</div>
+        <div class="file-info">
+          <div class="file-name" title="${f.name}">${f.name}</div>
+          <div class="file-meta">${f.chars.toLocaleString()} chars · Uploaded ${f.date}</div>
+          <div class="file-preview" id="prev-${f.id}">${f.text.slice(0, 300).replace(/</g, '&lt;')}${f.text.length > 300 ? '...' : ''}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px;flex-shrink:0">
+          <div style="display:flex;align-items:center;gap:6px">
+            <span style="font-size:11px;color:${f.active ? 'var(--accent-green)' : 'var(--text-muted)'}">${f.active ? '✅ Active' : 'Off'}</span>
+            <label class="toggle-switch" title="Toggle AI context">
+              <input type="checkbox" ${f.active ? 'checked' : ''} onchange="toggleFile(${f.id})">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+          <button onclick="previewFile(${f.id})" style="background:none;border:1px solid var(--border-color);border-radius:var(--radius-sm);padding:4px 8px;font-size:11px;color:var(--text-muted);cursor:pointer">👁 Preview</button>
+          <button onclick="deleteFile(${f.id})" style="background:none;border:1px solid rgba(239,68,68,0.3);border-radius:var(--radius-sm);padding:4px 8px;font-size:11px;color:#f87171;cursor:pointer">🗑 Delete</button>
+        </div>
+      </div>
+    `).join('');
+        }
+
+        function toggleFile(id) {
+            FileHandler.toggleActive(id);
+            renderFiles();
+            buildSidebar('uploads.html');
+        }
+
+        function deleteFile(id) {
+            FileHandler.delete(id);
+            renderFiles();
+            buildSidebar('uploads.html');
+            toast('File deleted', '🗑️');
+        }
+
+        function previewFile(id) {
+            const el = document.getElementById(`prev-${id}`);
+            el.style.display = el.style.display === 'block' ? 'none' : 'block';
+        }
+
+        async function processFiles(fileList) {
+            const statusEl = document.getElementById('upload-status');
+            const statusText = document.getElementById('upload-status-text');
+            const pctEl = document.getElementById('upload-pct');
+            const bar = document.getElementById('upload-progress-bar');
+            statusEl.style.display = 'block';
+
+            for (let i = 0; i < fileList.length; i++) {
+                const file = fileList[i];
+                const pct = Math.round(((i) / fileList.length) * 100);
+                statusText.textContent = `Reading ${file.name}...`;
+                pctEl.textContent = pct + '%';
+                bar.style.width = pct + '%';
+
+                if (file.size > 10 * 1024 * 1024) { // 10MB limit
+                    toast(`${file.name} is too large (max 10MB)`, '⚠️');
+                    continue;
+                }
+
+                try {
+                    const text = await FileHandler.extractText(file);
+                    FileHandler.save(file.name, text, file.type);
+                    toast(`✅ ${file.name} uploaded!`, '📁');
+                } catch (e) {
+                    toast(`Failed to read ${file.name}: ${e.message}`, '❌');
+                }
+            }
+
+            bar.style.width = '100%';
+            pctEl.textContent = '100%';
+            statusText.textContent = 'Done!';
+            setTimeout(() => { statusEl.style.display = 'none'; bar.style.width = '0%'; }, 2000);
+            renderFiles();
+            buildSidebar('uploads.html');
+        }
+
+        function handleFileInput(e) { processFiles(e.target.files); e.target.value = ''; }
+
+        function onDragOver(e) { e.preventDefault(); document.getElementById('upload-zone').classList.add('drag-over'); }
+        function onDragLeave() { document.getElementById('upload-zone').classList.remove('drag-over'); }
+        function onDrop(e) {
+            e.preventDefault();
+            document.getElementById('upload-zone').classList.remove('drag-over');
+            processFiles(e.dataTransfer.files);
+        }
+
+        renderFiles();
+    </script>
+</body>
+
+</html>

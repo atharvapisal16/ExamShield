@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Last-Minute Revision – ExamShield</title>
+    <meta name="description"
+        content="Flashcard revision mode with 3D flip cards. 5-minute before exam mode. Add custom cards.">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .revision-layout {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: 24px;
+        }
+
+        .deck-selector {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+
+        .card-counter {
+            font-family: var(--font-heading);
+            font-size: 16px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-align: center;
+        }
+
+        .nav-arrows {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .arrow-btn {
+            width: 52px;
+            height: 52px;
+            border-radius: 50%;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            font-size: 22px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            color: var(--text-secondary);
+        }
+
+        .arrow-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(139, 92, 246, 0.1);
+        }
+
+        .arrow-btn:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .card-actions {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .add-card-form {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .five-min-mode {
+            background: linear-gradient(135deg, rgba(236, 72, 153, 0.15), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(236, 72, 153, 0.3);
+            border-radius: var(--radius-xl);
+            padding: 24px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 900px) {
+            .revision-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">🚀 Revision <span>Mode</span></h1>
+                <p class="page-subtitle">Flip flashcards, nail last-minute revision. Click card to reveal answer!</p>
+            </div>
+            <div class="page-body">
+
+                <!-- 5 MIN MODE -->
+                <div class="five-min-mode">
+                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                        <div>
+                            <div style="font-family:var(--font-heading);font-size:18px;font-weight:800">⚡ 5 Min Before
+                                Exam Mode</div>
+                            <div style="font-size:13px;color:var(--text-secondary);margin-top:4px">Ultra-fast mode —
+                                only your starred ⭐ cards</div>
+                        </div>
+                        <button class="btn btn-pink" onclick="startFiveMinMode()">Start 5-Min Blitz!</button>
+                    </div>
+                </div>
+
+                <div class="revision-layout">
+                    <!-- MAIN FLASHCARD AREA -->
+                    <div>
+                        <!-- DECK SELECTOR -->
+                        <div class="deck-selector" id="deck-selector">
+                            <button class="filter-pill active" data-deck="all" onclick="selectDeck('all', this)">📚 All
+                                Cards</button>
+                            <button class="filter-pill" data-deck="starred" onclick="selectDeck('starred', this)">⭐
+                                Starred</button>
+                            <button class="filter-pill" data-deck="DSA" onclick="selectDeck('DSA', this)">📊
+                                DSA</button>
+                            <button class="filter-pill" data-deck="CN" onclick="selectDeck('CN', this)">🌐 CN</button>
+                            <button class="filter-pill" data-deck="OS" onclick="selectDeck('OS', this)">💻 OS</button>
+                            <button class="filter-pill" data-deck="DBMS" onclick="selectDeck('DBMS', this)">🗄️
+                                DBMS</button>
+                            <button class="filter-pill" data-deck="IoT" onclick="selectDeck('IoT', this)">📡
+                                IoT</button>
+                            <button class="filter-pill" data-deck="Blockchain"
+                                onclick="selectDeck('Blockchain', this)">🔗 BC</button>
+                            <button class="filter-pill" data-deck="OOP" onclick="selectDeck('OOP', this)">☕ OOP</button>
+                        </div>
+
+                        <!-- FLASHCARD -->
+                        <div class="flashcard-container" id="flashcard-area">
+                            <div class="card-counter" id="card-counter">Card 1 of 1</div>
+                            <div style="width:100%;max-width:560px">
+                                <div class="progress-bar-wrap" style="margin-bottom:16px">
+                                    <div class="progress-bar" id="fc-progress" style="width:0%"></div>
+                                </div>
+                            </div>
+                            <div class="flashcard-scene" onclick="flipCard()">
+                                <div class="flashcard" id="flashcard">
+                                    <div class="flashcard-face flashcard-front">
+                                        <div class="flashcard-hint">❓ QUESTION — Click to flip</div>
+                                        <div class="flashcard-text" id="fc-question">No cards in this deck. Add some
+                                            below! 👇</div>
+                                        <div class="flashcard-sub" id="fc-subject"></div>
+                                    </div>
+                                    <div class="flashcard-face flashcard-back">
+                                        <div class="flashcard-hint">✅ ANSWER</div>
+                                        <div class="flashcard-text" id="fc-answer">Add cards to see answers here.</div>
+                                        <div class="flashcard-sub" id="fc-formula" style="color:var(--accent-green)">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="nav-arrows">
+                                <button class="arrow-btn" onclick="prevCard()" id="prev-btn">◀</button>
+                                <button class="arrow-btn" onclick="flipCard()" title="Flip">🔄</button>
+                                <button class="arrow-btn" onclick="toggleStar()" id="star-btn" title="Star">⭐</button>
+                                <button class="arrow-btn" onclick="nextCard()" id="next-btn">▶</button>
+                            </div>
+                            <div class="card-actions" style="margin-top:8px">
+                                <button class="btn btn-ghost btn-sm" onclick="shuffleCards()">🔀 Shuffle</button>
+                                <button class="btn btn-ghost btn-sm" onclick="markKnown()">✓ Know It</button>
+                                <button class="btn btn-ghost btn-sm" onclick="markReview()">↩ Review Again</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- RIGHT: ADD CARDS -->
+                    <div>
+                        <div class="card">
+                            <div class="section-title" style="margin-bottom:16px">➕ Add Flashcard</div>
+                            <div class="add-card-form">
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Subject</div>
+                                    <select class="input-field" id="new-subject">
+                                        <option>DSA</option>
+                                        <option>CN</option>
+                                        <option>OS</option>
+                                        <option>DBMS</option>
+                                        <option>OOP</option>
+                                        <option>IoT</option>
+                                        <option>Blockchain</option>
+                                        <option>COA</option>
+                                        <option>Discrete Maths</option>
+                                        <option>Eng. Maths</option>
+                                        <option>Software Engg.</option>
+                                        <option>Other</option>
+                                    </select>
+                                </div>
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Question / Front *</div>
+                                    <textarea class="textarea-field" id="new-question"
+                                        placeholder="What is Newton's 2nd Law?" style="min-height:80px"></textarea>
+                                </div>
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Answer / Back *</div>
+                                    <textarea class="textarea-field" id="new-answer"
+                                        placeholder="F = ma (Force = Mass × Acceleration)"
+                                        style="min-height:80px"></textarea>
+                                </div>
+                                <div class="input-group" style="margin-bottom:0">
+                                    <div class="input-label">Formula / Extra Note (optional)</div>
+                                    <input type="text" class="input-field" id="new-formula"
+                                        placeholder="Key formula or memory tip...">
+                                </div>
+                                <button class="btn btn-primary" onclick="addCard()">➕ Add Card</button>
+                            </div>
+                        </div>
+
+                        <!-- STATS CARD -->
+                        <div class="card card-gradient" style="margin-top:16px">
+                            <div class="section-title" style="margin-bottom:12px">📊 Session Stats</div>
+                            <div style="display:flex;flex-direction:column;gap:8px;font-size:14px">
+                                <div style="display:flex;justify-content:space-between"><span
+                                        style="color:var(--text-muted)">Total Cards</span> <strong
+                                        id="s-total">0</strong></div>
+                                <div style="display:flex;justify-content:space-between"><span
+                                        style="color:var(--text-muted)">Known ✓</span> <strong id="s-known"
+                                        style="color:var(--accent-green)">0</strong></div>
+                                <div style="display:flex;justify-content:space-between"><span
+                                        style="color:var(--text-muted)">Review Again</span> <strong id="s-review"
+                                        style="color:var(--accent-yellow)">0</strong></div>
+                                <div style="display:flex;justify-content:space-between"><span
+                                        style="color:var(--text-muted)">Starred</span> <strong id="s-starred"
+                                        style="color:var(--accent-yellow)">0</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/file-handler.js"></script>
+    <script>
+        initPage('revision.html');
+
+        const DEFAULT_CARDS = [
+            { id: 1, subject: 'DSA', question: "What is the time complexity of Merge Sort?", answer: "O(n log n) in all cases (best/avg/worst). Space: O(n). Stable sort. Divide-and-conquer: split, sort halves, merge.", formula: "T(n)=2T(n/2)+O(n) → O(n log n)", starred: true },
+            { id: 2, subject: 'DSA', question: "Stack vs Queue — key differences?", answer: "Stack: LIFO — push/pop from same end. Used for recursion, DFS, undo. Queue: FIFO — enqueue at rear, dequeue at front. Used for BFS, scheduling, buffers.", formula: "Both O(1) for insert/delete", starred: false },
+            { id: 3, subject: 'DSA', question: "What is Dijkstra's Algorithm used for?", answer: "Single-source shortest path on weighted graphs with non-negative edges. Uses min-heap priority queue. Greedy: always expands lowest-cost unvisited vertex.", formula: "Time: O((V+E) log V) with min-heap", starred: true },
+            { id: 4, subject: 'CN', question: "OSI Model — 7 layers?", answer: "Physical → Data Link → Network → Transport → Session → Presentation → Application. Mnemonic: Please Do Not Throw Sausage Pizza Away.", formula: "IP=Network, TCP/UDP=Transport, HTTP=Application", starred: true },
+            { id: 5, subject: 'CN', question: "TCP vs UDP — when to use each?", answer: "TCP: reliable, ordered, connection-oriented. 3-way handshake. Use for HTTP, FTP, email. UDP: fast, connectionless, no guarantee. Use for video streaming, DNS, gaming.", formula: "TCP overhead: SYN→SYN-ACK→ACK", starred: false },
+            { id: 6, subject: 'OS', question: "4 conditions for Deadlock?", answer: "MICE — Mutual Exclusion, Hold & Wait (Involuntary no-preemption), Circular Wait, Hold & wait with Existing resources. All 4 must hold simultaneously for deadlock.", formula: "Banker's Algorithm: finds safe sequence", starred: true },
+            { id: 7, subject: 'OS', question: "Paging vs Segmentation?", answer: "Paging: fixed-size pages, no external fragmentation, hardware-managed via page table. Segmentation: variable-size segments (code/data/stack), programmer-visible logical units. Modern systems use both (segmented paging).", formula: "Physical addr = Frame_no × page_size + offset", starred: false },
+            { id: 8, subject: 'DBMS', question: "ACID Properties?", answer: "Atomicity: all-or-nothing. Consistency: DB remains valid. Isolation: concurrent txns don't interfere. Durability: committed data survives crashes. Implemented via WAL (Write Ahead Logging) and 2PL.", formula: "Durability → redo log | Atomicity → undo log", starred: true },
+            { id: 9, subject: 'DBMS', question: "2NF vs 3NF vs BCNF?", answer: "2NF: no partial dependency (every non-key attr depends on whole PK). 3NF: no transitive dependency. BCNF: for every FD X→Y, X must be superkey. BCNF is stricter — may lose lossless decomposition.", formula: "Need[i] = Max[i] - Alloc[i] (Banker's)", starred: false },
+            { id: 10, subject: 'IoT', question: "What is MQTT? Why IoT?", answer: "Message Queuing Telemetry Transport. Lightweight pub/sub protocol over TCP. Broker routes messages between publishers & subscribers by topic. QoS 0/1/2 for delivery guarantee. Low bandwidth = ideal for sensors.", formula: "QoS 0=at most once, QoS 1=at least once, QoS 2=exactly once", starred: true },
+            { id: 11, subject: 'Blockchain', question: "How does Bitcoin PoW work?", answer: "Miners find nonce so SHA-256(block_header+nonce) < Target. Difficulty adjusts every 2016 blocks. Winner broadcasts block, earns reward. 51% attack = controlling majority hash power.", formula: "Hash(prev_hash + Merkle_root + nonce) < Target", starred: true },
+            { id: 12, subject: 'OOP', question: "Overloading vs Overriding?", answer: "Overloading: same name, different params — compile-time (static) polymorphism. Overriding: child redefines parent method — runtime (dynamic) polymorphism via vtable/dynamic dispatch. @Override in Java ensures correctness.", formula: "Method resolution: compile-time for overload, runtime for override", starred: false },
+        ];
+
+        // Reset old school-subject cards if they contain Physics/Chemistry
+        const stored = LS.get('er_flashcards', null);
+        if (stored && stored.length && ['Physics', 'Chemistry', 'Biology', 'Math'].includes(stored[0]?.subject)) {
+            LS.set('er_flashcards', DEFAULT_CARDS);
+        }
+        let allCards = LS.get('er_flashcards', DEFAULT_CARDS);
+        let deck = [...allCards];
+        let currentIdx = 0;
+        let isFlipped = false;
+        let sessionKnown = 0, sessionReview = 0;
+
+        function getFilteredDeck(filter) {
+            if (filter === 'all') return [...allCards];
+            if (filter === 'starred') return allCards.filter(c => c.starred);
+            return allCards.filter(c => c.subject === filter);
+        }
+
+        function selectDeck(filter, el) {
+            document.querySelectorAll('.deck-selector .filter-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            deck = getFilteredDeck(filter);
+            currentIdx = 0;
+            isFlipped = false;
+            renderCard();
+        }
+
+        function renderCard() {
+            const card = deck[currentIdx];
+            if (!card) {
+                document.getElementById('fc-question').textContent = 'No cards in this deck!';
+                document.getElementById('fc-answer').textContent = 'Add cards using the form →';
+                document.getElementById('fc-subject').textContent = '';
+                document.getElementById('fc-formula').textContent = '';
+                document.getElementById('card-counter').textContent = 'Empty deck';
+                return;
+            }
+            document.getElementById('fc-question').textContent = card.question;
+            document.getElementById('fc-answer').textContent = card.answer;
+            document.getElementById('fc-subject').textContent = card.subject;
+            document.getElementById('fc-formula').textContent = card.formula || '';
+            document.getElementById('card-counter').textContent = `Card ${currentIdx + 1} of ${deck.length}`;
+            document.getElementById('fc-progress').style.width = `${((currentIdx + 1) / deck.length) * 100}%`;
+            document.getElementById('star-btn').style.color = card.starred ? 'var(--accent-yellow)' : 'var(--text-muted)';
+            document.getElementById('prev-btn').disabled = currentIdx === 0;
+            document.getElementById('next-btn').disabled = currentIdx === deck.length - 1;
+            // Un-flip
+            const fc = document.getElementById('flashcard');
+            if (isFlipped) { fc.classList.remove('flipped'); isFlipped = false; }
+            updateStats();
+        }
+
+        function flipCard() {
+            const fc = document.getElementById('flashcard');
+            fc.classList.toggle('flipped');
+            isFlipped = !isFlipped;
+            if (isFlipped) updateStats(true);
+        }
+
+        function nextCard() { if (currentIdx < deck.length - 1) { currentIdx++; isFlipped = false; renderCard(); } }
+        function prevCard() { if (currentIdx > 0) { currentIdx--; isFlipped = false; renderCard(); } }
+
+        function shuffleCards() {
+            deck = deck.sort(() => Math.random() - 0.5);
+            currentIdx = 0; isFlipped = false;
+            renderCard();
+            toast('Cards shuffled!', '🔀');
+        }
+
+        function toggleStar() {
+            const card = deck[currentIdx];
+            if (!card) return;
+            const idx = allCards.findIndex(c => c.id === card.id);
+            if (idx !== -1) allCards[idx].starred = !allCards[idx].starred;
+            deck[currentIdx].starred = allCards[idx]?.starred;
+            LS.set('er_flashcards', allCards);
+            document.getElementById('star-btn').style.color = deck[currentIdx].starred ? 'var(--accent-yellow)' : 'var(--text-muted)';
+            updateStats();
+            toast(deck[currentIdx].starred ? 'Card starred!' : 'Star removed', '⭐');
+        }
+
+        function markKnown() { sessionKnown++; updateStats(); nextCard(); }
+        function markReview() { sessionReview++; updateStats(); nextCard(); }
+
+        function updateStats(studied = false) {
+            document.getElementById('s-total').textContent = allCards.length;
+            document.getElementById('s-known').textContent = sessionKnown;
+            document.getElementById('s-review').textContent = sessionReview;
+            document.getElementById('s-starred').textContent = allCards.filter(c => c.starred).length;
+            if (studied) { LS.update('er_stats', s => { s.flashcardsStudied = (s.flashcardsStudied || 0) + 1; return s; }, getStats()); }
+        }
+
+        function addCard() {
+            const q = document.getElementById('new-question').value.trim();
+            const a = document.getElementById('new-answer').value.trim();
+            const sub = document.getElementById('new-subject').value;
+            const formula = document.getElementById('new-formula').value.trim();
+            if (!q || !a) { toast('Please fill in question and answer!', '⚠️'); return; }
+            const card = { id: Date.now(), subject: sub, question: q, answer: a, formula, starred: false };
+            allCards.unshift(card);
+            LS.set('er_flashcards', allCards);
+            deck = [card, ...deck];
+            document.getElementById('new-question').value = '';
+            document.getElementById('new-answer').value = '';
+            document.getElementById('new-formula').value = '';
+            currentIdx = 0; isFlipped = false;
+            renderCard();
+            toast('Flashcard added!', '✅');
+        }
+
+        function startFiveMinMode() {
+            const starred = allCards.filter(c => c.starred);
+            if (!starred.length) { toast('No starred cards! Star some cards first ⭐', '⚠️'); return; }
+            deck = starred.sort(() => Math.random() - 0.5);
+            currentIdx = 0; isFlipped = false;
+            document.querySelectorAll('.deck-selector .filter-pill').forEach(p => p.classList.remove('active'));
+            document.querySelector('[data-deck="starred"]').classList.add('active');
+            renderCard();
+            toast(`5-Min Blitz! ${starred.length} starred cards loaded 🚀`, '⚡');
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', e => {
+            if (e.key === 'ArrowRight' || e.key === 'ArrowDown') nextCard();
+            if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') prevCard();
+            if (e.key === ' ') { e.preventDefault(); flipCard(); }
+        });
+
+        renderCard();
+    </script>
+</body>
+
+</html>

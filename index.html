@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ExamShield – Student Survival Toolkit</title>
+  <meta name="description"
+    content="AI-powered study toolkit for students. Quick notes, doubt solver, revision flashcards, Pomodoro timer, PYQ bank, and exam anxiety help.">
+  <link rel="stylesheet" href="css/main.css">
+  <style>
+    .hero-section {
+      background: var(--gradient-hero);
+      background-size: 300% 300%;
+      animation: gradientShift 10s ease infinite;
+      border-radius: var(--radius-xl);
+      padding: 48px 40px;
+      margin-bottom: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero-section::before {
+      content: '';
+      position: absolute;
+      width: 400px;
+      height: 400px;
+      background: radial-gradient(circle, rgba(139, 92, 246, 0.2), transparent 70%);
+      top: -100px;
+      right: -100px;
+      border-radius: 50%;
+    }
+
+    .hero-section::after {
+      content: '';
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      background: radial-gradient(circle, rgba(59, 130, 246, 0.15), transparent 70%);
+      bottom: -80px;
+      left: 40px;
+      border-radius: 50%;
+    }
+
+    .hero-emoji {
+      font-size: 64px;
+      animation: float 3s ease-in-out infinite;
+      margin-bottom: 16px;
+      display: block;
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: 48px;
+      font-weight: 900;
+      letter-spacing: -1.5px;
+      line-height: 1.1;
+      margin-bottom: 14px;
+      position: relative;
+    }
+
+    .hero-title .gradient-text {
+      background: linear-gradient(90deg, #c4b5fd, #93c5fd, #6ee7f7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .hero-sub {
+      font-size: 17px;
+      color: rgba(255, 255, 255, 0.75);
+      line-height: 1.7;
+      max-width: 540px;
+      position: relative;
+    }
+
+    .hero-tags {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 20px;
+      position: relative;
+    }
+
+    .hero-tag {
+      padding: 6px 14px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .feature-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .welcome-time {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 8px;
+    }
+
+    @media (max-width: 900px) {
+
+      .dashboard-grid,
+      .feature-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .hero-title {
+        font-size: 36px;
+      }
+    }
+
+    @media (max-width: 600px) {
+
+      .dashboard-grid,
+      .feature-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app-layout">
+    <aside class="sidebar" id="sidebar"></aside>
+    <main class="main-content">
+      <div class="page-header">
+        <div class="hero-section">
+          <div class="welcome-time" id="welcome-time"></div>
+          <div class="hero-icon-wrap" style="margin-bottom:16px;display:flex;gap:12px;align-items:center">
+            <span style="font-size:60px;animation:float 3s ease-in-out infinite;display:inline-block">📚</span>
+            <span style="font-size:44px;animation:float 3s ease-in-out infinite 0.5s;display:inline-block">🧠</span>
+            <span style="font-size:36px;animation:float 3s ease-in-out infinite 1s;display:inline-block">✨</span>
+          </div>
+          <h1 class="hero-title">Your <span class="gradient-text">ExamShield</span><br>Starts Here</h1>
+          <p class="hero-sub">AI-powered tools to crush your exams. Quick notes, instant doubt solving, smart revision —
+            all in one place.</p>
+          <div class="hero-tags">
+            <span class="hero-tag">🤖 Multi-AI</span>
+            <span class="hero-tag">⚡ Last-Minute Ready</span>
+            <span class="hero-tag">🧘 Anxiety-Free Mode</span>
+            <span class="hero-tag">🔥 Streak Tracking</span>
+          </div>
+        </div>
+      </div>
+      <div class="page-body">
+
+        <!-- STATS ROW -->
+        <div class="dashboard-grid">
+          <div class="stat-card"
+            style="background:linear-gradient(135deg,rgba(139,92,246,0.15),rgba(59,130,246,0.1));border-color:rgba(139,92,246,0.25)">
+            <div class="stat-card-bg" style="background:var(--accent)"></div>
+            <div class="stat-icon">📈</div>
+            <div class="stat-value" id="stat-hours">0h</div>
+            <div class="stat-label">Study Hours</div>
+            <div class="stat-change" id="stat-hours-change">+0h today</div>
+          </div>
+          <div class="stat-card"
+            style="background:linear-gradient(135deg,rgba(245,158,11,0.15),rgba(239,68,68,0.1));border-color:rgba(245,158,11,0.25)">
+            <div class="stat-card-bg" style="background:var(--accent-yellow)"></div>
+            <div class="stat-icon">🔥</div>
+            <div class="stat-value" id="stat-streak">0</div>
+            <div class="stat-label">Day Streak</div>
+            <div class="stat-change" id="stat-streak-sub" style="color:var(--accent-yellow)">Keep it going!</div>
+          </div>
+          <div class="stat-card"
+            style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(6,182,212,0.1));border-color:rgba(16,185,129,0.25)">
+            <div class="stat-card-bg" style="background:var(--accent-green)"></div>
+            <div class="stat-icon">🎯</div>
+            <div class="stat-value" id="stat-completion">0%</div>
+            <div class="stat-label">Weekly Goal</div>
+            <div style="margin-top:8px">
+              <div class="progress-bar-wrap">
+                <div class="progress-bar" id="stat-bar" style="width:0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- WEEKLY CHART -->
+        <div class="card card-gradient" style="margin-bottom:28px">
+          <div class="section-header">
+            <div class="section-title">📊 This Week's Activity</div>
+            <span class="badge badge-purple" id="weekly-total">0 min total</span>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:8px;height:80px;margin-top:8px">
+            <div style="display:flex;flex-direction:column;align-items:center;flex:1" id="chart-wrap">
+              <!-- bars built by JS -->
+            </div>
+          </div>
+          <div id="chart-labels" style="display:flex;gap:8px;margin-top:8px"></div>
+        </div>
+
+        <!-- FEATURE TILES -->
+        <div class="section-header">
+          <div class="section-title">🧩 Your Toolkit</div>
+        </div>
+        <div class="feature-grid">
+          <a href="notes.html" class="feature-tile">
+            <div class="feature-tile-icon"
+              style="background:linear-gradient(135deg,rgba(139,92,246,0.3),rgba(59,130,246,0.2))">📝</div>
+            <div class="feature-tile-title">Quick Notes</div>
+            <div class="feature-tile-desc">AI-powered notes from any topic or PDF. Bullets, formulas, definitions.</div>
+            <div class="feature-tile-arrow">→</div>
+          </a>
+          <a href="doubt-solver.html" class="feature-tile">
+            <div class="feature-tile-icon"
+              style="background:linear-gradient(135deg,rgba(59,130,246,0.3),rgba(6,182,212,0.2))">🤖</div>
+            <div class="feature-tile-title">AI Doubt Solver</div>
+            <div class="feature-tile-desc">Ask anything. GPT-4o + Gemini answer in parallel. Best answer highlighted.
+            </div>
+            <div class="feature-tile-arrow">→</div>
+          </a>
+          <a href="revision.html" class="feature-tile">
+            <div class="feature-tile-icon"
+              style="background:linear-gradient(135deg,rgba(236,72,153,0.3),rgba(139,92,246,0.2))">🚀</div>
+            <div class="feature-tile-title">Revision Mode</div>
+            <div class="feature-tile-desc">Flashcards, 5-min exam mode, swipe to study. Beat the clock.</div>
+            <div class="feature-tile-arrow">→</div>
+          </a>
+          <a href="timer.html" class="feature-tile">
+            <div class="feature-tile-icon"
+              style="background:linear-gradient(135deg,rgba(245,158,11,0.3),rgba(239,68,68,0.2))">⏱️</div>
+            <div class="feature-tile-title">Study Timer</div>
+            <div class="feature-tile-desc">Pomodoro sessions, break reminders, daily stats & streak tracking.</div>
+            <div class="feature-tile-arrow">→</div>
+          </a>
+          <a href="pyq.html" class="feature-tile">
+            <div class="feature-tile-icon"
+              style="background:linear-gradient(135deg,rgba(16,185,129,0.3),rgba(6,182,212,0.2))">📋</div>
+            <div class="feature-tile-title">PYQ Bank</div>
+            <div class="feature-tile-desc">Subject & unit-wise previous year questions. Star important ones ⭐</div>
+            <div class="feature-tile-arrow">→</div>
+          </a>
+          <a href="anxiety.html" class="feature-tile">
+            <div class="feature-tile-icon"
+              style="background:linear-gradient(135deg,rgba(6,182,212,0.3),rgba(10,185,129,0.2))">🧘</div>
+            <div class="feature-tile-title">Calm Mode</div>
+            <div class="feature-tile-desc">Breathing exercises, motivational quotes, memory tricks. Stay zen.</div>
+            <div class="feature-tile-arrow">→</div>
+          </a>
+        </div>
+
+        <!-- TIPS -->
+        <div class="card"
+          style="margin-top:28px;background:linear-gradient(135deg,rgba(245,158,11,0.1),rgba(239,68,68,0.06));border-color:rgba(245,158,11,0.2)">
+          <div class="section-title" style="margin-bottom:12px">💡 Quick Tips</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;color:var(--text-secondary)">
+            <div>🎯 <strong>Study in 25-min focused blocks</strong> with 5-min breaks for max retention</div>
+            <div>🧠 <strong>Teach what you learn</strong> — use the AI Doubt Solver to verify your understanding</div>
+            <div>📝 <strong>Don't re-read passively</strong> — use flashcards for active recall instead</div>
+            <div>🔥 <strong>Consistency beats cramming</strong> — even 30 min/day builds a strong streak</div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/file-handler.js"></script>
+  <script>
+    initPage('index.html');
+
+    // Time greeting
+    const hr = new Date().getHours();
+    const greet = hr < 12 ? 'Good morning' : hr < 17 ? 'Good afternoon' : 'Good evening';
+    document.getElementById('welcome-time').textContent = `${greet}, Champion! 👋  •  ${new Date().toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'long' })}`;
+
+    // Stats
+    const stats = getStats();
+    const totalHours = ((stats.studyMinutes || 0) / 60).toFixed(1);
+    document.getElementById('stat-hours').textContent = totalHours + 'h';
+    document.getElementById('stat-streak').textContent = stats.streak || 0;
+    const weeklyGoalMins = 600; // 10h/week goal
+    const weeklyTotal = (stats.weeklyMinutes || []).reduce((a, b) => a + b, 0);
+    const pct = Math.min(Math.round((weeklyTotal / weeklyGoalMins) * 100), 100);
+    document.getElementById('stat-completion').textContent = pct + '%';
+    document.getElementById('stat-bar').style.width = pct + '%';
+    document.getElementById('weekly-total').textContent = `${Math.round(weeklyTotal)} min total`;
+
+    // Weekly chart
+    const chartWrap = document.getElementById('chart-wrap');
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const weekly = stats.weeklyMinutes || [0, 0, 0, 0, 0, 0, 0];
+    const maxMin = Math.max(...weekly, 30);
+    const orderedDays = [1, 2, 3, 4, 5, 6, 0]; // Mon → Sun
+    chartWrap.style.display = 'flex';
+    chartWrap.style.alignItems = 'flex-end';
+    chartWrap.style.gap = '8px';
+    chartWrap.style.width = '100%';
+    chartWrap.style.height = '80px';
+    orderedDays.forEach(d => {
+      const mins = weekly[d] || 0;
+      const h = Math.max((mins / maxMin) * 64, 4);
+      const bar = document.createElement('div');
+      bar.className = 'chart-bar';
+      bar.style.flex = '1';
+      bar.style.height = h + 'px';
+      bar.title = `${days[d]}: ${mins} min`;
+      if (d === new Date().getDay()) bar.style.background = 'var(--accent)';
+      chartWrap.appendChild(bar);
+    });
+
+    // Build day labels via JS
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    const labelsWrap = document.getElementById('chart-labels');
+    labels.forEach(d => {
+      const el = document.createElement('div');
+      el.style.cssText = 'flex:1;text-align:center;font-size:10px;color:var(--text-muted)';
+      el.textContent = d;
+      labelsWrap.appendChild(el);
+    });
+  </script>
+</body>
+
+</html>

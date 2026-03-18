@@ -1,0 +1,533 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exam Anxiety Helper – ExamShield</title>
+    <meta name="description"
+        content="Calm your exam anxiety with guided breathing, motivational quotes, memory tricks, and calm mode.">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .anxiety-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .breathing-section {
+            grid-column: 1 / -1;
+        }
+
+        /* Breathing */
+        .breathing-outer {
+            position: relative;
+            width: 260px;
+            height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto;
+        }
+
+        .breath-ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            animation: breathRing 4s ease-in-out infinite;
+        }
+
+        .breath-ring-1 {
+            width: 260px;
+            height: 260px;
+            animation-delay: 0s;
+        }
+
+        .breath-ring-2 {
+            width: 220px;
+            height: 220px;
+            animation-delay: 0.5s;
+        }
+
+        @keyframes breathRing {
+
+            0%,
+            100% {
+                transform: scale(0.7);
+                opacity: 0.6;
+            }
+
+            50% {
+                transform: scale(1);
+                opacity: 0.2;
+            }
+        }
+
+        .breath-core {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 40% 40%, #a78bfa, #6366f1 60%, #4338ca);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 60px rgba(139, 92, 246, 0.4), inset 0 0 30px rgba(255, 255, 255, 0.1);
+            transition: transform 4s cubic-bezier(0.4, 0, 0.2, 1);
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+            border: 2px solid rgba(167, 139, 250, 0.5);
+        }
+
+        .breath-core.inhale {
+            transform: scale(1.5);
+            box-shadow: 0 0 100px rgba(139, 92, 246, 0.6);
+        }
+
+        .breath-core.hold {
+            transform: scale(1.5);
+        }
+
+        .breath-core.exhale {
+            transform: scale(1);
+        }
+
+        .breath-phase-text {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 4px;
+        }
+
+        .breath-count {
+            font-family: var(--font-heading);
+            font-size: 36px;
+            font-weight: 900;
+            color: #fff;
+        }
+
+        .breath-instruction {
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            margin-top: 2px;
+        }
+
+        .breath-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .breath-pattern-btns {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .pattern-btn {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .pattern-btn.active {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        /* Quotes */
+        .quote-rotate {
+            animation: fadeIn 0.8s ease;
+        }
+
+        /* Memory tricks */
+        .mnemonic-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            transition: var(--transition);
+            margin-bottom: 10px;
+        }
+
+        .mnemonic-card:hover {
+            border-color: rgba(139, 92, 246, 0.3);
+        }
+
+        /* Calm sections grid */
+        @media (max-width: 900px) {
+            .anxiety-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .breathing-section {
+                grid-column: 1;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">🧘 Exam Anxiety <span>Helper</span></h1>
+                <p class="page-subtitle">Breathe. Relax. You've got this. Guided breathing, motivation & memory tricks —
+                    all in one calm space.</p>
+            </div>
+            <div class="page-body">
+
+                <!-- TOP ACTIONS -->
+                <div style="display:flex;gap:10px;margin-bottom:24px;flex-wrap:wrap;align-items:center">
+                    <button class="btn btn-secondary" onclick="toggleCalmMode()" id="calm-btn">🌸 Enable Calm
+                        Mode</button>
+                    <button class="btn btn-ghost" onclick="playAmbient()">🎵 Play Ambient Sound</button>
+                    <div style="margin-left:auto;font-size:13px;color:var(--text-muted)" id="breath-session-info">
+                        Sessions completed: <strong id="breath-sessions">0</strong></div>
+                </div>
+
+                <div class="anxiety-grid">
+
+                    <!-- BREATHING EXERCISE (full width) -->
+                    <div class="card breathing-section" style="text-align:center">
+                        <div class="section-title" style="margin-bottom:6px">🫁 Guided Box Breathing</div>
+                        <div style="font-size:13px;color:var(--text-muted);margin-bottom:20px">Click the circle or press
+                            Start to begin. Used by Navy SEALs to calm anxiety instantly.</div>
+
+                        <!-- PATTERN SELECTOR -->
+                        <div class="breath-pattern-btns">
+                            <button class="pattern-btn active" data-pattern="box" onclick="setPattern('box',this)">📦
+                                Box (4-4-4-4)</button>
+                            <button class="pattern-btn" data-pattern="478" onclick="setPattern('478',this)">🌙 4-7-8
+                                Sleep</button>
+                            <button class="pattern-btn" data-pattern="calm" onclick="setPattern('calm',this)">🌊 Calm
+                                (5-2-5)</button>
+                        </div>
+
+                        <div class="breathing-outer" style="margin-top:24px">
+                            <div class="breath-ring breath-ring-1"></div>
+                            <div class="breath-ring breath-ring-2"></div>
+                            <div class="breath-core" id="breath-circle" onclick="toggleBreathing()">
+                                <div class="breath-phase-text" id="bp-phase">READY</div>
+                                <div class="breath-count" id="bp-count">4</div>
+                                <div class="breath-instruction" id="bp-instruction">Click to start</div>
+                            </div>
+                        </div>
+
+                        <div class="breath-controls" style="margin-top:24px">
+                            <button class="btn btn-primary btn-lg" onclick="toggleBreathing()" id="breath-start-btn">▶
+                                Start Breathing</button>
+                            <button class="btn btn-ghost btn-lg" onclick="resetBreathing()">↺ Reset</button>
+                        </div>
+
+                        <div
+                            style="margin-top:16px;display:flex;justify-content:center;gap:32px;font-size:13px;color:var(--text-muted)">
+                            <div>Inhale: expand your lungs fully</div>
+                            <div>Hold: stay still</div>
+                            <div>Exhale: release slowly</div>
+                        </div>
+                    </div>
+
+                    <!-- MOTIVATIONAL QUOTES -->
+                    <div class="card">
+                        <div class="section-header">
+                            <div class="section-title">💪 Motivation Boost</div>
+                            <button class="btn btn-ghost btn-sm" onclick="newQuote()">🔀 New Quote</button>
+                        </div>
+                        <div class="quote-card quote-rotate" id="quote-display">
+                            <div class="quote-mark">"</div>
+                            <div class="quote-text" id="quote-text">Loading your inspiration...</div>
+                            <div class="quote-author" id="quote-author"></div>
+                        </div>
+                        <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap" id="mood-chips">
+                            <button class="filter-pill active" onclick="setMood('all', this)">😊 All</button>
+                            <button class="filter-pill" onclick="setMood('exam', this)">📝 Exam Focus</button>
+                            <button class="filter-pill" onclick="setMood('courage', this)">💪 Courage</button>
+                            <button class="filter-pill" onclick="setMood('calm', this)">🌊 Calm</button>
+                        </div>
+                    </div>
+
+                    <!-- MEMORY BOOST -->
+                    <div class="card">
+                        <div class="section-header">
+                            <div class="section-title">🧠 Memory Boost Tricks</div>
+                            <button class="btn btn-ghost btn-sm" onclick="shuffleMnemonics()">🔀 Refresh</button>
+                        </div>
+                        <div id="mnemonics-display"></div>
+                        <div class="divider"></div>
+                        <div style="font-size:13px;color:var(--text-secondary)">
+                            <strong>Pro Tip:</strong> Create your own mnemonic! Take the first letter of each word you
+                            need to remember and make a funny sentence.
+                        </div>
+                    </div>
+
+                    <!-- EXAM DAY CHECKLIST -->
+                    <div class="card">
+                        <div class="section-title" style="margin-bottom:14px">✅ Exam Day Checklist</div>
+                        <div id="checklist" style="display:flex;flex-direction:column;gap:8px;font-size:14px">
+                        </div>
+                    </div>
+
+                    <!-- POSITIVE AFFIRMATIONS -->
+                    <div class="card card-gradient" style="grid-column: 1 / -1">
+                        <div class="section-title" style="margin-bottom:16px">🌟 Quick Calm Techniques</div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+                            <div
+                                style="padding:16px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-color);text-align:center">
+                                <div style="font-size:32px;margin-bottom:8px">🥶</div>
+                                <div style="font-weight:700;margin-bottom:6px;font-size:14px">Cold Water Trick</div>
+                                <div style="font-size:13px;color:var(--text-secondary)">Splash cold water on your face
+                                    to activate the dive reflex — instantly slows heart rate.</div>
+                            </div>
+                            <div
+                                style="padding:16px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-color);text-align:center">
+                                <div style="font-size:32px;margin-bottom:8px">👁️</div>
+                                <div style="font-weight:700;margin-bottom:6px;font-size:14px">5-4-3-2-1 Grounding</div>
+                                <div style="font-size:13px;color:var(--text-secondary)">Name 5 things you see, 4 you
+                                    touch, 3 you hear, 2 you smell, 1 you taste.</div>
+                            </div>
+                            <div
+                                style="padding:16px;background:var(--bg-card);border-radius:var(--radius-md);border:1px solid var(--border-color);text-align:center">
+                                <div style="font-size:32px;margin-bottom:8px">💪</div>
+                                <div style="font-weight:700;margin-bottom:6px;font-size:14px">Power Pose</div>
+                                <div style="font-size:13px;color:var(--text-secondary)">Stand tall, hands on hips for 2
+                                    minutes. Research shows it boosts confidence hormones.</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/file-handler.js"></script>
+    <script>
+        initPage('anxiety.html');
+
+        let breathingActive = false;
+        let breathInterval = null;
+        let breathPhase = 0;
+        let breathCounter = 0;
+        let breathSessionsCompleted = LS.get('er_breath_sessions', 0);
+        let calmModeOn = false;
+
+        document.getElementById('breath-sessions').textContent = breathSessionsCompleted;
+
+        // Breathing patterns: [inhale, hold, exhale, hold2] in seconds
+        const PATTERNS = {
+            box: { name: 'Box', steps: ['INHALE', 'HOLD', 'EXHALE', 'HOLD'], times: [4, 4, 4, 4] },
+            '478': { name: '4-7-8', steps: ['INHALE', 'HOLD', 'EXHALE', ''], times: [4, 7, 8, 0] },
+            calm: { name: 'Calm', steps: ['INHALE', 'HOLD', 'EXHALE', ''], times: [5, 2, 5, 0] },
+        };
+        let currentPattern = PATTERNS.box;
+
+        function setPattern(p, el) {
+            if (breathingActive) return;
+            currentPattern = PATTERNS[p];
+            document.querySelectorAll('.pattern-btn').forEach(b => b.classList.remove('active'));
+            el.classList.add('active');
+            resetBreathing();
+        }
+
+        function toggleBreathing() {
+            if (breathingActive) {
+                clearInterval(breathInterval);
+                breathingActive = false;
+                document.getElementById('breath-start-btn').innerHTML = '▶ Start Breathing';
+                document.getElementById('breath-circle').className = 'breath-core';
+                document.getElementById('bp-phase').textContent = 'PAUSED';
+                document.getElementById('bp-instruction').textContent = 'Click to continue';
+            } else {
+                breathingActive = true;
+                document.getElementById('breath-start-btn').innerHTML = '⏸ Pause';
+                startBreathCycle();
+            }
+        }
+
+        function startBreathCycle() {
+            runPhase(0);
+        }
+
+        function runPhase(p) {
+            if (!breathingActive) return;
+            const steps = currentPattern.steps;
+            const times = currentPattern.times;
+            // Skip empty steps
+            if (!steps[p] || times[p] === 0) {
+                setTimeout(() => {
+                    if (!breathingActive) return;
+                    const next = (p + 1) % steps.length;
+                    if (next === 0) { breathSessionsCompleted++; LS.set('er_breath_sessions', breathSessionsCompleted); document.getElementById('breath-sessions').textContent = breathSessionsCompleted; }
+                    runPhase(next);
+                }, 100);
+                return;
+            }
+
+            const phase = steps[p];
+            const duration = times[p];
+            let count = duration;
+
+            const circle = document.getElementById('breath-circle');
+            document.getElementById('bp-phase').textContent = phase;
+            document.getElementById('bp-count').textContent = count;
+
+            if (phase === 'INHALE') {
+                document.getElementById('bp-instruction').textContent = 'Breathe in slowly...';
+                circle.className = 'breath-core inhale';
+            } else if (phase === 'EXHALE') {
+                document.getElementById('bp-instruction').textContent = 'Release slowly...';
+                circle.className = 'breath-core exhale';
+                setTimeout(() => { if (document.getElementById('breath-circle')) document.getElementById('breath-circle').className = 'breath-core exhale'; }, 100);
+            } else {
+                document.getElementById('bp-instruction').textContent = 'Stay still...';
+                // keep current transform
+            }
+
+            clearInterval(breathInterval);
+            breathInterval = setInterval(() => {
+                if (!breathingActive) { clearInterval(breathInterval); return; }
+                count--;
+                document.getElementById('bp-count').textContent = Math.max(count, 0);
+                if (count <= 0) {
+                    clearInterval(breathInterval);
+                    const next = (p + 1) % steps.length;
+                    if (next === 0) {
+                        breathSessionsCompleted++;
+                        LS.set('er_breath_sessions', breathSessionsCompleted);
+                        document.getElementById('breath-sessions').textContent = breathSessionsCompleted;
+                    }
+                    runPhase(next);
+                }
+            }, 1000);
+        }
+
+        function resetBreathing() {
+            clearInterval(breathInterval);
+            breathingActive = false;
+            document.getElementById('breath-start-btn').innerHTML = '▶ Start Breathing';
+            document.getElementById('bp-phase').textContent = 'READY';
+            document.getElementById('bp-count').textContent = currentPattern.times[0];
+            document.getElementById('bp-instruction').textContent = 'Click to start';
+            document.getElementById('breath-circle').className = 'breath-core';
+        }
+
+        // Quotes
+        const MOOD_QUOTES = {
+            all: QUOTES,
+            exam: [
+                { text: "You have studied harder than you think. Trust the process.", author: "ExamShield" },
+                { text: "The expert in anything was once a beginner. You are prepared.", author: "Unknown" },
+                { text: "Every question you encounter is solvable. Think step by step.", author: "ExamShield" },
+            ],
+            courage: [
+                { text: "Courage is not the absence of fear, but taking action in spite of it.", author: "Unknown" },
+                { text: "You are braver than you believe, smarter than you seem.", author: "A.A. Milne" },
+            ],
+            calm: [
+                { text: "Take a breath. You have survived 100% of your worst days.", author: "Unknown" },
+                { text: "This too shall pass. One question at a time.", author: "ExamShield" },
+                { text: "Your mind is calmer than you think right now.", author: "ExamShield" },
+            ]
+        };
+        let qMood = 'all';
+        let qPool = [...QUOTES];
+
+        function newQuote() {
+            const pool = MOOD_QUOTES[qMood] || QUOTES;
+            const q = pool[Math.floor(Math.random() * pool.length)];
+            const el = document.getElementById('quote-display');
+            el.style.animation = 'none';
+            setTimeout(() => {
+                document.getElementById('quote-text').textContent = q.text;
+                document.getElementById('quote-author').textContent = '— ' + q.author;
+                el.style.animation = 'fadeIn 0.6s ease';
+            }, 50);
+        }
+
+        function setMood(m, el) {
+            qMood = m;
+            document.querySelectorAll('#mood-chips .filter-pill').forEach(p => p.classList.remove('active'));
+            el.classList.add('active');
+            newQuote();
+        }
+
+        // Mnemonics
+        function shuffleMnemonics() {
+            const shuffled = [...MNEMONICS].sort(() => Math.random() - 0.5);
+            document.getElementById('mnemonics-display').innerHTML = shuffled.map(m => `
+      <div class="mnemonic-card">
+        <div style="font-size:12px;font-weight:700;color:var(--accent);margin-bottom:4px">${m.topic}</div>
+        <div style="font-size:13px;color:var(--text-secondary)">${m.trick}</div>
+      </div>
+    `).join('');
+        }
+
+        // Checklist
+        const CHECKLIST = [
+            'Admit card / Hall ticket',
+            'Valid ID proof',
+            'Pens (min 2), Pencils, Eraser, Sharpener',
+            'Water bottle',
+            'Snacks / glucose',
+            'Watch (non-smart)',
+            'Calculator (if allowed)',
+            'Good night\'s sleep done ✓',
+            'Light breakfast eaten ✓',
+            'Arrived 30 min early planned ✓',
+        ];
+        let checkState = LS.get('er_checklist', {});
+        function renderChecklist() {
+            document.getElementById('checklist').innerHTML = CHECKLIST.map((item, i) => `
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;color:${checkState[i] ? 'var(--text-muted)' : 'var(--text-secondary)'}">
+        <input type="checkbox" ${checkState[i] ? 'checked' : ''} onchange="checkItem(${i}, this.checked)"
+          style="width:16px;height:16px;accent-color:var(--accent);cursor:pointer">
+        <span style="${checkState[i] ? 'text-decoration:line-through' : ''}">${item}</span>
+      </label>
+    `).join('');
+        }
+        function checkItem(i, checked) {
+            checkState[i] = checked;
+            LS.set('er_checklist', checkState);
+            renderChecklist();
+        }
+
+        // Calm mode
+        function toggleCalmMode() {
+            calmModeOn = !calmModeOn;
+            setTheme(calmModeOn ? 'calm' : 'dark');
+            document.getElementById('calm-btn').textContent = calmModeOn ? '🌙 Back to Dark Mode' : '🌸 Enable Calm Mode';
+            toast(calmModeOn ? 'Calm Mode activated 🌸' : 'Dark Mode restored 🌙', '🎨');
+        }
+
+        function playAmbient() {
+            toggleSound('rain');
+            toast('Rain sounds playing 🌧', '🎵');
+        }
+
+        // Init
+        newQuote();
+        shuffleMnemonics();
+        renderChecklist();
+        // Auto-rotate quote every 30 seconds
+        setInterval(newQuote, 30000);
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Doubt Solver – ExamShield</title>
+    <meta name="description"
+        content="Ask any exam doubt. GPT-4o and Gemini answer in parallel. Best answer auto-highlighted.">
+    <link rel="stylesheet" href="css/main.css">
+    <style>
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        .chat-message {
+            display: flex;
+            gap: 14px;
+            animation: fadeIn 0.4s ease;
+        }
+
+        .chat-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .chat-avatar.user {
+            background: var(--gradient-primary);
+        }
+
+        .chat-avatar.ai {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.3), rgba(6, 182, 212, 0.3));
+            border: 1px solid rgba(16, 185, 129, 0.4);
+        }
+
+        .chat-bubble {
+            flex: 1;
+        }
+
+        .chat-bubble-header {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .chat-bubble-content {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            padding: 16px;
+            font-size: 14px;
+            line-height: 1.8;
+            color: var(--text-secondary);
+        }
+
+        .chat-bubble.user-msg .chat-bubble-content {
+            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(59, 130, 246, 0.1));
+            border-color: rgba(139, 92, 246, 0.3);
+            color: var(--text-primary);
+        }
+
+        .mode-toggle-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+            align-items: center;
+        }
+
+        .mode-pill {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: var(--transition);
+        }
+
+        .mode-pill.active {
+            background: rgba(139, 92, 246, 0.2);
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+
+        .ask-bar {
+            display: flex;
+            gap: 10px;
+            align-items: flex-end;
+            position: sticky;
+            bottom: 0;
+            background: var(--bg-primary);
+            padding: 16px 0 8px;
+            border-top: 1px solid var(--border-color);
+            margin-top: 20px;
+        }
+
+        .ask-input-wrap {
+            flex: 1;
+            position: relative;
+        }
+
+        .ask-input {
+            width: 100%;
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            font-size: 15px;
+            resize: none;
+            min-height: 54px;
+            max-height: 160px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-layout">
+        <aside class="sidebar" id="sidebar"></aside>
+        <main class="main-content">
+            <div class="page-header">
+                <h1 class="page-title">🤖 AI <span>Doubt Solver</span></h1>
+                <p class="page-subtitle">Ask any question. GPT-4o & Gemini answer in parallel — best answer
+                    auto-highlighted.</p>
+            </div>
+            <div class="page-body">
+
+                <!-- MODE + HISTORY CLEAR -->
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+                    <div class="mode-toggle-row" style="margin:0">
+                        <span style="font-size:13px;color:var(--text-muted);font-weight:600">Mode:</span>
+                        <button class="mode-pill active" id="mode-normal" onclick="setMode('normal')">📚 Normal</button>
+                        <button class="mode-pill" id="mode-eli5" onclick="setMode('eli5')">🧒 Explain like I'm
+                            10</button>
+                        <button class="mode-pill" id="mode-concise" onclick="setMode('concise')">⚡ Ultra
+                            Concise</button>
+                    </div>
+                    <div style="display:flex;gap:8px">
+                        <button class="btn btn-ghost btn-sm" onclick="clearChat()">🗑️ Clear</button>
+                        <button class="btn btn-secondary btn-sm" onclick="openSettings()">⚙️ API Keys</button>
+                    </div>
+                </div>
+
+                <!-- AI STATUS BADGES -->
+                <div style="display:flex;gap:8px;margin-bottom:20px" id="ai-status-row">
+                    <span class="badge" id="badge-openai"
+                        style="background:rgba(99,102,241,0.15);color:#a5b4fc;border-color:rgba(99,102,241,0.3)">🤖
+                        GPT-4o — checking key...</span>
+                    <span class="badge" id="badge-gemini"
+                        style="background:rgba(16,185,129,0.15);color:#6ee7b7;border-color:rgba(16,185,129,0.3)">✨
+                        Gemini — checking key...</span>
+                </div>
+
+                <!-- CHAT AREA -->
+                <div id="chat-area" class="chat-container"></div>
+
+                <!-- EMPTY STATE -->
+                <div id="empty-state" class="empty-state">
+                    <div class="empty-state-icon">💬</div>
+                    <div class="empty-state-text">Ask your first doubt!</div>
+                    <div class="empty-state-sub">Type below and both AIs will race to answer you 🏁</div>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:20px"
+                        id="suggestion-pills">
+                        <button class="filter-pill" onclick="askSuggestion(this)">Explain Dijkstra's algorithm step by
+                            step</button>
+                        <button class="filter-pill" onclick="askSuggestion(this)">Difference between process and thread
+                            in OS</button>
+                        <button class="filter-pill" onclick="askSuggestion(this)">What is ACID in DBMS?</button>
+                        <button class="filter-pill" onclick="askSuggestion(this)">Explain TCP 3-way handshake</button>
+                        <button class="filter-pill" onclick="askSuggestion(this)">How does Blockchain achieve
+                            consensus?</button>
+                        <button class="filter-pill" onclick="askSuggestion(this)">Explain MQTT protocol in IoT</button>
+                        <button class="filter-pill" onclick="askSuggestion(this)">What is virtual memory and
+                            paging?</button>
+                        <button class="filter-pill" onclick="askSuggestion(this)">Explain polymorphism in Java with
+                            example</button>
+                    </div>
+                </div>
+
+                <!-- ASK BAR -->
+                <div class="ask-bar">
+                    <div class="ask-input-wrap">
+                        <textarea class="ask-input" id="ask-input"
+                            placeholder="Type your doubt here... (e.g. Explain Lami's theorem simply)" rows="1"
+                            onkeydown="handleKey(event)"></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-lg" id="ask-btn" onclick="askDoubt()">
+                        <span id="ask-btn-icon">🚀</span> Ask AI
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/main.js"></script>
+    <script src="js/profile.js"></script>
+    <script src="js/file-handler.js"></script>
+    <script src="js/ai-service.js"></script>
+    <script>
+        initPage('doubt-solver.html');
+        let mode = 'normal';
+        let chatHistory = LS.get('er_chat', []);
+
+        function setMode(m) {
+            mode = m;
+            document.querySelectorAll('.mode-pill').forEach(p => p.classList.remove('active'));
+            document.getElementById('mode-' + m).classList.add('active');
+        }
+
+        // Check API keys
+        const keys = getApiKeys();
+        const ob = document.getElementById('badge-openai');
+        const gb = document.getElementById('badge-gemini');
+        if (keys.openai) { ob.textContent = '🤖 GPT-4o — Ready ✓'; ob.style.color = '#6ee7b7'; }
+        else { ob.textContent = '🤖 GPT-4o — No key ⚠️'; ob.style.color = '#f87171'; }
+        if (keys.gemini) { gb.textContent = '✨ Gemini — Ready ✓'; gb.style.color = '#6ee7b7'; }
+        else { gb.textContent = '✨ Gemini — No key ⚠️'; gb.style.color = '#f87171'; }
+
+        function getSystemPrompt() {
+            if (mode === 'eli5') return 'You are a friendly tutor for a 10-year-old. Explain concepts very simply with everyday analogies and examples. Avoid jargon. Be warm and encouraging.';
+            if (mode === 'concise') return 'You are a concise exam tutor. Give answers in maximum 5 bullet points. Be extremely brief and to the point. No fluff.';
+            return 'You are a helpful AI tutor. Give clear, structured answers with examples where needed. Use bullet points and bold key terms.';
+        }
+
+        function appendMessage(role, content, isLoading = false) {
+            const chatArea = document.getElementById('chat-area');
+            const empty = document.getElementById('empty-state');
+            if (empty) empty.style.display = 'none';
+
+            const div = document.createElement('div');
+            div.className = `chat-message`;
+            const isUser = role === 'user';
+            div.id = isLoading ? 'loading-msg' : '';
+            div.innerHTML = `
+      <div class="chat-avatar ${isUser ? 'user' : 'ai'}">${isUser ? '🧑' : '🤖'}</div>
+      <div class="chat-bubble ${isUser ? 'user-msg' : ''}">
+        <div class="chat-bubble-header">${isUser ? 'You' : 'AI Response'} • ${new Date().toLocaleTimeString()}</div>
+        <div class="chat-bubble-content" id="${isLoading ? 'loading-content' : 'msg-' + Date.now()}">${isLoading ? '<div class="ai-loading"><div class="spinner"></div> Both AIs are thinking...</div>' : content}</div>
+      </div>
+    `;
+            chatArea.appendChild(div);
+            div.scrollIntoView({ behavior: 'smooth', block: 'end' });
+            return div;
+        }
+
+        function renderAIResponse(containerId, { results, errors, scores, best }) {
+            const el = document.getElementById(containerId);
+            if (!el) return;
+            const bestText = (results[best] || results.openai || results.gemini || 'No response.').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>').replace(/\*(.*?)\*/g, '<em>$1</em>');
+            el.innerHTML = `
+      <div style="margin-bottom:14px;padding:14px;background:rgba(16,185,129,0.1);border:1px solid rgba(16,185,129,0.3);border-radius:var(--radius-md)">
+        <div style="font-size:11px;font-weight:700;color:#34d399;margin-bottom:8px">🏆 BEST ANSWER — ${best === 'openai' ? 'GPT-4o Mini' : 'Gemini Flash'} (scored highest)</div>
+        <div style="font-size:14px;line-height:1.8;color:var(--text-secondary)">${bestText}</div>
+      </div>
+      <details style="cursor:pointer">
+        <summary style="font-size:12px;color:var(--text-muted);font-weight:600;user-select:none">📊 View comparison (both AI responses)</summary>
+        <div class="ai-compare-grid" style="margin-top:12px">
+          ${AI._aiCard('openai', '🤖 GPT-4o Mini', results.openai, errors.openai, scores.openai, best === 'openai')}
+          ${AI._aiCard('gemini', '✨ Gemini Flash', results.gemini, errors.gemini, scores.gemini, best === 'gemini')}
+        </div>
+      </details>
+    `;
+        }
+
+        async function askDoubt() {
+            const input = document.getElementById('ask-input');
+            const q = input.value.trim();
+            if (!q) return;
+            input.value = '';
+            input.style.height = 'auto';
+
+            const btn = document.getElementById('ask-btn');
+            btn.disabled = true;
+            btn.innerHTML = '<div class="spinner"></div> Asking...';
+
+            appendMessage('user', q);
+            const loadDiv = appendMessage('ai', '', true);
+            const contentId = 'loading-content';
+
+            const sysPrompt = getSystemPrompt();
+            try {
+                const result = await AI.queryBoth(q, sysPrompt);
+                const cid = 'msg-' + Date.now();
+                document.getElementById(contentId).id = cid;
+                renderAIResponse(cid, result);
+
+                chatHistory.push({ q, result, mode, time: Date.now() });
+                LS.set('er_chat', chatHistory.slice(-50));
+                updateStats(s => { s.questionsSolved = (s.questionsSolved || 0) + 1; return s; });
+            } catch (e) {
+                document.getElementById(contentId).innerHTML = `<span style="color:#f87171">⚠️ ${e.message}</span>`;
+            }
+            btn.disabled = false;
+            btn.innerHTML = '<span>🚀</span> Ask AI';
+        }
+
+        function askSuggestion(el) {
+            document.getElementById('ask-input').value = el.textContent;
+            askDoubt();
+        }
+
+        function clearChat() {
+            document.getElementById('chat-area').innerHTML = '';
+            LS.set('er_chat', []);
+            const e = document.getElementById('empty-state');
+            if (e) e.style.display = '';
+        }
+
+        function handleKey(e) {
+            if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); askDoubt(); }
+        }
+
+        // Auto-resize textarea
+        document.getElementById('ask-input').addEventListener('input', function () {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    </script>
+</body>
+
+</html>
